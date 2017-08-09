@@ -3,13 +3,6 @@ sudo apt-get update
 sudo apt-get install -y git
 sudo apt-get install -y python-pip
 pip install flask
-cd flask-app
-rm -rvf *
-git init
-git remote add upstream https://github.com/shreyasnbhat/education-engineering.git 
-git fetch upstream
-git reset --hard upstream/master
-git checkout master
 SCRIPT
 
 Vagrant.configure('2') do |config|
