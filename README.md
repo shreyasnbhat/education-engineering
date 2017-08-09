@@ -10,12 +10,13 @@ This repository is dedicated for the Design Project of Data Mining/Analysis in E
 - Vagrant
 
 #### Vagrant machine setup(Under developement)
-1. First install vagrant in your Ubuntu machine by `sudo apt-get install vagrant`.
-2. Then in the directory where the repo was cloned run `vagrant up`
-3. This will spawn an instance of the vagrant machine which would be used to host our web server.
-4. To run the webserver type `vagrant ssh` to ssh into the virtual instance.
-5. Then run `cd flask-app` and `python server.py`
-6. Now open `localhost:500/` in the browser to view the running `flask app`.  
+1. Install vagrant prerequisites first that is Virtual Box.
+2. Then install vagrant in your Ubuntu machine by `sudo apt-get install vagrant`.
+3. Then in the directory where the repo was cloned run `vagrant up`
+4. This will spawn an instance of the vagrant machine which would be used to host our web server.
+5. To run the webserver type `vagrant ssh` to ssh into the virtual instance.
+6. Then run `cd flask-app` and `python server.py`
+7. Now open `localhost:500/` in the browser to view the running `flask app`.  
 
 #### Contribution Guidelines
 1. Pull requests to be sent from any branch of the fork except `master`
