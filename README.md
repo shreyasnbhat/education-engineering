@@ -7,7 +7,15 @@ This repository is dedicated for the Design Project of Data Mining/Analysis in E
 - Local DB - (PostrgreSQL/SQLAlchemy) (To-do)
 - Online DB - Firebase (To-do)
 - Tensorflow (To-do)
-- Vagrant (To-do)
+- Vagrant
+
+#### Vagrant machine setup(Under developement)
+1. First install vagrant in your Ubuntu machine by `sudo apt-get install vagrant`.
+2. Then in the directory where the repo was cloned run `vagrant up`
+3. This will spawn an instance of the vagrant machine which would be used to host our web server.
+4. To run the webserver type `vagrant ssh` to ssh into the virtual instance.
+5. Then run `cd flask-app` and `python server.py`
+6. Now open `localhost:500/` in the browser to view the running `flask app`.  
 
 #### Contribution Guidelines
 1. Pull requests to be sent from any branch of the fork except `master`
