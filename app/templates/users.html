@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Users</title>
+</head>
+<body>
+        {%  if users %}
+        <ul>
+        {% for i in users %}
+            <li>
+                <h3>{{i.name}}</h3>
+        <hr>
+                <p>{{i.id}}</p>
+                <p>{{i.gender}}</p>
+            </li>
+        {% endfor %}
+        </ul>
+
+            {% else %}
+            <h3>Welcome to the Users page!</h3>
+        {% endif %}
+</body>
+</html>
