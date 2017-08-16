@@ -1,8 +1,7 @@
 from flask import render_template
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app import app
-from db_models import Base, Student,engine
+from models import Student,engine
 
 '''Final Configuration'''
 DBSession = sessionmaker(bind=engine)
@@ -15,10 +14,9 @@ def getHomePage():
 
 @app.route('/users')
 def getScores():
+    #Get all user here and display
     users = session.query(Student).all()
-    print users
     return render_template('users.html', users = users)
-
 
 @app.route('/predictions')
 def getPredictions():

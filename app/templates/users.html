@@ -3,22 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>Users</title>
+
+    <link href="{{url_for('static', filename='css/materialize.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
 </head>
 <body>
-        {%  if users %}
-        <ul>
-        {% for i in users %}
-            <li>
-                <h3>{{i.name}}</h3>
-        <hr>
-                <p>{{i.id}}</p>
-                <p>{{i.gender}}</p>
-            </li>
-        {% endfor %}
+<nav>
+    <div class="nav-wrapper orange accent-3">
+        <a href="/" class="brand-logo title-style">Grade Predictor and Analyzer</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li class="large-font"><a href="/users">Scores</a></li>
+            <li class="large-font"><a href="/predictions">Predictor</a></li>
         </ul>
-
-            {% else %}
-            <h3>Welcome to the Users page!</h3>
-        {% endif %}
+    </div>
+</nav>
+<div class="block-style">
+    {% if users %}
+    <ul class="collection">
+        {% for i in users %}
+        <li class="collection-item avatar">
+            <img src="static/img/user_placeholder.png" alt="" class="circle"><span
+                class="title"><strong>{{i.name}}</strong></span>
+            <p>{{i.gender}} <br>
+                {{i.id}}
+            </p>
+            <a href="#!" class="secondary-content"><i class="material-icons">grade</i></a>
+            {% endfor %}
+    </ul>
+    {% else %}
+    <h3>Welcome to the Users page!</h3>
+    {% endif %}
+</div>
 </body>
 </html>
