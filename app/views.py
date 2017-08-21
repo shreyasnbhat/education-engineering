@@ -18,6 +18,11 @@ def getScores():
     users = session.query(Student).all()
     return render_template('users.html', users = users)
 
+@app.route('/users/<string:user_id>')
+def getScoreById(user_id):
+    user = session.query(Student).filter_by(id=user_id).one()
+    return render_template('userScores.html' , scores = user.scores , user = user)
+
 @app.route('/predictions')
 def getPredictions():
     return "<h1>Predictions</h1>"
