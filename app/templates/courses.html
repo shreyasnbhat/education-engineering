@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Subjects</title>
+
+    <link href="{{url_for('static', filename='css/materialize.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+<nav>
+    <div class="nav-wrapper orange accent-3">
+        <a href="/" class="brand-logo title-style">Grade Predictor and Analyzer</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li class="large-font"><a href="/users">Scores</a></li>
+            <li class="large-font"><a href="/predictions">Predictor</a></li>
+        </ul>
+    </div>
+</nav>
+<div class="block-style">
+    {% if courses %}
+    <ul class="collection">
+        {% for course in courses %}
+        <li class="collection-item">
+            <a href="/courses/{{course.id}}">
+            <p class="small-font">{{course.name}}</p>
+            <p>  {{course.id}} </p>
+            {% endfor %}
+            </a>
+        </li>
+    </ul>
+    {% else %}
+    <h3>You have no Subjects currently!</h3>
+    {% endif %}
+</div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scores of {{student.name}} for {{course}}</title>
+
+    <link href="{{url_for('static', filename='css/materialize.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/epoch.min.css')}}">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="{{url_for('static',filename='js/epoch.min.js')}}"></script>
+
+
+</head>
+<body>
+<nav>
+    <div class="nav-wrapper orange accent-3">
+        <a href="/" class="brand-logo title-style">Grade Predictor and Analyzer</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li class="large-font"><a href="/courses">Courses</a></li>
+            <li class="large-font"><a href="/predictions">Predictor</a></li>
+        </ul>
+    </div>
+</nav>
+<div  class="block-style">
+    <h4>Scores</h4>
+</div>
+<hr>
+<div class="block-style">
+    {% if scores %}
+    <ul class="collection">
+        {% for i in scores %}
+        <li class="collection-item">
+            <p><strong>{{i.name}}</strong>
+                <br>
+                {{i.score}}
+            </p>
+            {% endfor %}
+    </ul>
+    {% else %}
+    <h3>Gand Mara</h3>
+    {% endif %}
+</div>
+</body>
+</html>

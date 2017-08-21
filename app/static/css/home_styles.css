@@ -1,15 +1,22 @@
+.black-font {
+    color: #000000;
+}
+
 .small-font {
     font-size: 34px;
+    color: #000000;
     font-family: "Roboto Slab", Roboto;
 }
 
 .medium-font {
     font-size: 45px;
+    color: #000000;
     font-family: "Roboto Slab", Roboto;
 }
 
 .large-font {
     font-size: 56px;
+    color: #000000;
     font-family: "Roboto Slab", Roboto;
 }
 

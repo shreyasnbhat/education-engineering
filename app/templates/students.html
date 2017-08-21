@@ -14,26 +14,28 @@
     <div class="nav-wrapper orange accent-3">
         <a href="/" class="brand-logo title-style">Grade Predictor and Analyzer</a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
-            <li class="large-font"><a href="/users">Scores</a></li>
+            <li class="large-font"><a href="/courses">Courses</a></li>
             <li class="large-font"><a href="/predictions">Predictor</a></li>
         </ul>
     </div>
 </nav>
 <div class="block-style">
-    {% if users %}
+    {% if students %}
     <ul class="collection">
-        {% for i in users %}
+        {% for student in students %}
         <li class="collection-item avatar">
-            <img src="static/img/user_placeholder.png" alt="" class="circle"><span
-                class="title"><strong>{{i.name}}</strong></span>
-            <p>{{i.gender}} <br>
-                {{i.id}}
+            <a href="/courses/{{course_id}}/{{student.id}}">
+            <img src="{{url_for('static',filename='img/user_placeholder.png')}}" alt="" class="circle"><span
+                    class="title"><strong><p class="black-font">{{student.name}}</p></strong></span>
+            <p class="black-font">{{student.gender}} <br>
+                {{student.id}}
             </p>
-            <a href="#!" class="secondary-content"><i class="material-icons">grade</i></a>
+            <a href="#" class="secondary-content"><i class="material-icons">grade</i></a>
             {% endfor %}
+            </a>
     </ul>
     {% else %}
-    <h3>Welcome to the Users page!</h3>
+    <p>Welcome!</p>
     {% endif %}
 </div>
 </body>
