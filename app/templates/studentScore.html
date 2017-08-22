@@ -2,17 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Scores of {{student.name}} for {{course}}</title>
+    <title>Scores of {{student.name}} for {{course.name}}</title>
 
     <link href="{{url_for('static', filename='css/materialize.min.css')}}" rel="stylesheet">
     <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/epoch.min.css')}}">
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    <script src="{{url_for('static',filename='js/epoch.min.js')}}"></script>
-
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
 </head>
 <body>
@@ -25,6 +23,48 @@
         </ul>
     </div>
 </nav>
+<div  class="block-style">
+    <h4>Graphs</h4>
+</div>
+<hr>
+<div id="scoreGraph"></div>
+<script>
+var score_labels = JSON.parse({{x_|tojson}});
+var scores_numbers = JSON.parse({{y_|tojson}});
+var data = [
+  {
+    x: score_labels,
+    y: scores_numbers,
+    type: 'bar',
+    name: 'Scores',
+    marker: {color: '#ff6e40' }
+  }
+];
+var layout = {
+    title: 'Scores',
+    yaxis: {tickfont: {
+        size: 14
+    }},
+    xaxis: {
+        title: 'Tests',
+        titlefont: {
+            size: 16,
+            color: 'rgb(107, 107, 107)'
+        },
+        tickfont: {
+            size: 14,
+            color: 'rgb(107, 107, 107)'
+        }
+    },
+    legend: {
+        x: 0,
+        y: 1.0,
+        bgcolor: 'rgba(255, 255, 255, 0)',
+        bordercolor: 'rgba(255, 255, 255, 0)'
+    }
+};
+Plotly.newPlot('scoreGraph', data,layout);
+</script>
 <div  class="block-style">
     <h4>Scores</h4>
 </div>

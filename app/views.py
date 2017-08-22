@@ -2,6 +2,7 @@ from flask import render_template
 from sqlalchemy.orm import sessionmaker
 from app import app
 from sqlalchemy import and_,or_
+import json
 from models import Student,engine,Course,Score
 
 '''Final Configuration'''
@@ -20,8 +21,6 @@ def getCourses():
 @app.route('/courses/<string:course_id>')
 def getStudentsByCourse(course_id):
     students = session.query(Student).filter(and_(Student.id == Score.student_id,Score.course_id == Course.id,Course.id == course_id)).all()
-    for x in students:
-        print x.id
     return render_template('students.html',students=students,course_id=course_id)
 
 @app.route('/courses/<string:course_id>/<string:student_id>')
@@ -29,7 +28,11 @@ def getMarksByStudent(course_id,student_id):
     course = session.query(Course).filter_by(id=course_id).one()
     scores = session.query(Score).filter_by(student_id=student_id).all()
     student = session.query(Student).filter_by(id=student_id).one()
-    return render_template('studentScore.html',scores=scores ,course=course,student=student)
+
+    ### For graphing
+    scores_num = json.dumps([i.score for i in scores ])
+    scores_names = json.dumps([i.name for i in scores])
+    return render_template('studentScore.html',scores=scores,course=course,student=student, x_ = scores_names , y_=scores_num)
 
 @app.route('/predictions')
 def getPredictions():
