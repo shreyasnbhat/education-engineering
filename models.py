@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker,relationship
 import os
+import bcrypt
 
 ### For testing only ###
 import pandas as pd
@@ -39,6 +40,12 @@ class Course(Base):
     name = Column(String(30),nullable=False)
     score = relationship('Score')
 
+class AuthStore(Base):
+    __tablename__ = 'authstore'
+
+    id = Column(String(10),primary_key=True)
+    salt = Column(String(50))
+    phash = Column(String(50))
 
 '''Final Configuration'''
 engine = create_engine('sqlite:///app.db')
@@ -92,7 +99,23 @@ if __name__ == '__main__':
 
     print "Added Courses"
 
+    ### Add some user data
+    ids = ['2015A7PS033G','2015A7PS029G','2015A7PS030G','2015A7PS031G','2015A7PS032G']
+    passwords = ['shreyas123','gmn0105','watchdogs','qwerty123','fakeaccent']
+    hashes = []
+    salts = []
+    for i in range(len(passwords)) :
+        generated_salt = bcrypt.gensalt()
+        phash = bcrypt.hashpw(passwords[i],generated_salt)
+        session.add(AuthStore(id=ids[i],phash=phash,salt=generated_salt))
+        print "ID: ",ids[i] , " salt:",generated_salt," hash:",phash
 
+    session.commit()
+
+    for i in range(len(hashes)):
+        print passwords[i] , salts[i] , hashes[i]
+
+    print "Finish"
 
 
 

@@ -19,32 +19,28 @@
 <nav>
     <div class="nav-wrapper orange accent-3">
         <a href="/" class="brand-logo title-style">Grade Predictor and Analyzer</a>
-        <ul id="nav-mobile" class="right hide-on-med-and-down">
-            <li class="large-font"><a href="/courses">Courses</a></li>
-            <li class="large-font"><a href="/predictions">Predictor</a></li>
-        </ul>
     </div>
 </nav>
 <div class="row block-style">
-    <form class="col s4 offset-s4 card-panel white">
+    <form class="col s4 offset-s4 card-panel white" action="{{url_for('getHomePage')}}" method="POST">
         <div class="row">
             <h4 class="center">Login</h4>
             <hr>
         </div>
         <div class="row block-style">
             <div class="input-field col s12">
-                <input placeholder="20XXYYZZDDDD" id="bits_id" class="validate">
+                <input name="bits-id" placeholder="20XXYYZZDDDD" id="bits_id" class="validate">
                 <label class="active" for="bits_id">BITS ID</label>
             </div>
         </div>
         <div class="row block-style">
             <div class="input-field col s12">
-                <input id="password" type="password" class="validate">
+                <input name="password" id="password" type="password" class="validate">
                 <label class="active" for="password">Password</label>
             </div>
         </div>
         <div class="row center">
-            <button class="btn waves-effect waves-light orange darken-4" name="action">Submit</button>
+            <button name="action" class="btn waves-effect waves-light orange darken-4">Submit</button>
         </div>
     </form>
 </div>
