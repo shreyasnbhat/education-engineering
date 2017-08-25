@@ -20,6 +20,11 @@
     font-family: "Roboto Slab", Roboto;
 }
 
+.login-style {
+    padding: 40px;
+    margin: 40px;
+}
+
 .title-style {
     margin-left: 10px;
 }

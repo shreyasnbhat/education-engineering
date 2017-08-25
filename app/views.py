@@ -1,7 +1,7 @@
 from flask import render_template
 from sqlalchemy.orm import sessionmaker
 from app import app
-from sqlalchemy import and_,or_
+from sqlalchemy import and_
 import json
 from models import Student,engine,Course,Score
 

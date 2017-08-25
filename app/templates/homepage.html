@@ -8,6 +8,12 @@
     <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
+    <style>
+        body {
+            background-image: url('../static/img/home.jpeg');
+        }
+    </style>
+
 </head>
 <body>
 <nav>
@@ -19,24 +25,30 @@
         </ul>
     </div>
 </nav>
+<div class="row block-style">
+    <form class="col s4 offset-s4 card-panel white">
+        <div class="row">
+            <h4 class="center">Login</h4>
+            <hr>
+        </div>
+        <div class="row block-style">
+            <div class="input-field col s12">
+                <input placeholder="20XXYYZZDDDD" id="bits_id" class="validate">
+                <label class="active" for="bits_id">BITS ID</label>
+            </div>
+        </div>
+        <div class="row block-style">
+            <div class="input-field col s12">
+                <input id="password" type="password" class="validate">
+                <label class="active" for="password">Password</label>
+            </div>
+        </div>
+        <div class="row center">
+            <button class="btn waves-effect waves-light orange darken-4" name="action">Submit</button>
+        </div>
+    </form>
 </div>
-<div class="row">
-    <div class="col s4 card-panel">
-        <div class="center"><i class="large material-icons">account_circle</i></div>
-        <p class="block-style">We did most of the heavy lifting for you to provide a default stylings that incorporate
-            our custom components.</p>
-    </div>
-    <div class="col s4 card-panel">
-        <div class="center"><i class="large material-icons">assignment</i></div>
-        <p class="block-style">By utilizing elements and principles of Material Design, we were able to create a
-            framework that focuses on User Experience.</p>
-    </div>
-    <div class="col s4 card-panel">
-        <div class="center"><i class="large material-icons">mail</i></div>
-        <p class="block-style">We have provided detailed documentation as well as specific code examples to help new
-            users get started.</p>
-    </div>
-
+</div>
 </div>
 </body>
 </html>
