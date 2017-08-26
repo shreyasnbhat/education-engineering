@@ -47,6 +47,18 @@ class AuthStore(Base):
     salt = Column(String(50))
     phash = Column(String(50))
 
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return self.id.encode('utf-8')
+
 '''Final Configuration'''
 engine = create_engine('sqlite:///app.db')
 Base.metadata.create_all(engine)
@@ -111,6 +123,7 @@ if __name__ == '__main__':
         print "ID: ",ids[i] , " salt:",generated_salt," hash:",phash
 
     session.commit()
+
 
     for i in range(len(hashes)):
         print passwords[i] , salts[i] , hashes[i]

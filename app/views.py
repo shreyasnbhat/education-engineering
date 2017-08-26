@@ -1,14 +1,11 @@
 from flask import render_template,request,redirect,url_for
-from sqlalchemy.orm import sessionmaker,exc
+from sqlalchemy.orm import exc
 from app import app
 from sqlalchemy import and_
 import json
-from models import Student,engine,Course,Score,AuthStore
+from models import Student,Course,Score,AuthStore,session
 import bcrypt
-
-'''Final Configuration'''
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
+from flask.ext.login import login_user,login_required,logout_user
 
 @app.route('/',methods=['GET','POST'])
 def getHomePage():
@@ -35,27 +32,38 @@ def getHomePage():
             print "-----------------------------------------------------------------------"
             print "-----------------------------------------------------------------------"
 
+
             if bcrypt.hashpw(password,user_credential_phash) == user_credential_phash:
+                login_user(user_credentials)
                 return redirect(url_for('getCourses'))
             else:
-                return redirect(url_for('getHomePage'))
+                error = "Wrong username or Password"
+                return render_template('homepage.html',error=error)
+
 
         except exc.NoResultFound:
-            print "No such user exists in the Database"
-            print "Add prompt to create a user"
-            return redirect(url_for('getHomePage'))
+            error = "No such user exists!"
+            return render_template('homepage.html',error=error)
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('getHomePage'))
 
 @app.route('/courses')
+@login_required
 def getCourses():
     courses = session.query(Course).all()
     return render_template('courses.html', courses = courses)
 
 @app.route('/courses/<string:course_id>')
+@login_required
 def getStudentsByCourse(course_id):
     students = session.query(Student).filter(and_(Student.id == Score.student_id,Score.course_id == Course.id,Course.id == course_id)).all()
     return render_template('students.html',students=students,course_id=course_id)
 
 @app.route('/courses/<string:course_id>/<string:student_id>')
+@login_required
 def getScoresByStudent(course_id,student_id):
     course = session.query(Course).filter_by(id=course_id).one()
     scores = session.query(Score).filter_by(student_id=student_id).all()
@@ -67,5 +75,6 @@ def getScoresByStudent(course_id,student_id):
     return render_template('studentScore.html',scores=scores,course=course,student=student, x_ = scores_names , y_=scores_num)
 
 @app.route('/predictions')
+@login_required
 def getPredictions():
     return "<h1>Predictions</h1>"

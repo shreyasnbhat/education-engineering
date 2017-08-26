@@ -42,6 +42,11 @@
         <div class="row center">
             <button name="action" class="btn waves-effect waves-light orange darken-4">Submit</button>
         </div>
+        {% if error %}
+        <div class="row center">
+            <p class="error center">{{error}}</p>
+        </div>
+        {% endif %}
     </form>
 </div>
 </div>
