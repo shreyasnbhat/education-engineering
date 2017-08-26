@@ -79,56 +79,68 @@ def databsePurge():
     os.remove('./app.db')
     print "Database purged Successfully"
 
-if __name__ == '__main__':
+def addUsers():
 
-    print MuPMarks.head()
-    print markFrame.head()
+    from bs4 import BeautifulSoup
+    data = open("html_doc.html", 'r').read()
 
+    soup = BeautifulSoup(data)
+
+    gender = 'Male'
+
+    for i in soup.find_all('tr'):
+        t = [j.string for j in i.find_all('td')]
+        if len(t) > 2:
+            id = t[0]
+            name = t[1]
+            session.add(Student(id=id,name=name,gender=gender))
+            session.commit()
+            print "Added ", id.lstrip('\n'), " ", name.strip("").strip(" .")
+
+
+def populateDB():
 
     ### Database Population ###
-    print "Number of Users"
-    print len(MuPMarks)
-
     for i in range(len(MuPMarks)):
         name = MuPMarks.loc[i]['Name']
         id = MuPMarks.loc[i]['ID Number']
         gender = 'Male'
-
+        id = id[0:8] + str(0) + id[8:12]
         scores = generateMarkList(i)
 
-        student = Student(id=id,name=name,gender=gender,scores=scores)
+        student = Student(id=id, name=name, gender=gender, scores=scores)
         session.add(student)
         session.commit()
-        print "Added ", id , " " ,name
-
+        print "Added ", id, " ", name
 
     ### Add some additional Courses
-    session.add(Course(id='CS F241',name='Microprocessors and Interfacing'))
-    session.add(Course(id='MATH F211',name='Mathematics III'))
-    session.add(Course(id='ECON F211',name='Principle Of Economics'))
-    session.add(Course(id='CS F215',name='Digital Design'))
+    session.add(Course(id='CS F241', name='Microprocessors and Interfacing'))
+    session.add(Course(id='MATH F211', name='Mathematics III'))
+    session.add(Course(id='ECON F211', name='Principle Of Economics'))
+    session.add(Course(id='CS F215', name='Digital Design'))
     session.commit()
 
     print "Added Courses"
 
-    ### Add some user data
-    ids = ['2015A7PS033G','2015A7PS029G','2015A7PS030G','2015A7PS031G','2015A7PS032G']
-    passwords = ['shreyas123','gmn0105','watchdogs','qwerty123','fakeaccent']
-    hashes = []
-    salts = []
-    for i in range(len(passwords)) :
+    ### Add some AuthStore data
+    ids = ['2015A7PS033G', '2015A7PS029G', '2015A7PS030G', '2015A7PS031G', '2015A7PS032G']
+    passwords = ['shreyas123', 'gmn0105', 'watchdogs', 'qwerty123', 'fakeaccent']
+    for i in range(len(passwords)):
         generated_salt = bcrypt.gensalt()
-        phash = bcrypt.hashpw(passwords[i],generated_salt)
-        session.add(AuthStore(id=ids[i],phash=phash,salt=generated_salt))
-        print "ID: ",ids[i] , " salt:",generated_salt," hash:",phash
+        phash = bcrypt.hashpw(passwords[i], generated_salt)
+        session.add(AuthStore(id=ids[i], phash=phash, salt=generated_salt))
+        print "ID: ", ids[i], " salt:", generated_salt, " hash:", phash , "was added!"
 
     session.commit()
 
-
-    for i in range(len(hashes)):
-        print passwords[i] , salts[i] , hashes[i]
-
     print "Finish"
+
+
+if __name__ == '__main__':
+
+    ### Needs Testing
+    addUsers()
+    populateDB()
 
 
 
