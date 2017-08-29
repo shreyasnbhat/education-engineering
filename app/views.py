@@ -70,17 +70,22 @@ def getCourses():
         course_ids = dbSession.query(Score.course_id).filter_by(student_id=session['user_id']).distinct()
         courses = dbSession.query(Course).filter(Course.id.in_(course_ids)).all()
 
-        return render_template('courses.html', courses=courses)
+        return render_template('courses.html',
+                               courses=courses,
+                               user_id=session['userid'])
     except exc.NoResultFound:
         return render_template('courses.html')
 
 
+#### Need this for admin only
 @app.route('/courses/<string:course_id>')
 @login_required
 def getStudentsByCourse(course_id):
     students = dbSession.query(Student).filter(
         and_(Student.id == Score.student_id, Score.course_id == Course.id, Course.id == course_id)).all()
-    return render_template('students.html', students=students, course_id=course_id)
+    return render_template('students.html',
+                           students=students,
+                           course_id=course_id)
 
 
 @app.route('/courses/<string:course_id>/<string:student_id>')
@@ -93,7 +98,11 @@ def getScoresByStudent(course_id, student_id):
     ### For graphing need to pass the objects in JSON so that they are parsed in Javascript
     scores_num = json.dumps([i.score for i in scores])
     scores_names = json.dumps([i.name for i in scores])
-    return render_template('studentScore.html', scores=scores, course=course, student=student, x_=scores_names,
+    return render_template('studentScore.html',
+                           scores=scores,
+                           course=course,
+                           student=student,
+                           x_=scores_names,
                            y_=scores_num)
 
 

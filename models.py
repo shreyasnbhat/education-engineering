@@ -102,11 +102,11 @@ def idFormat(id):
 
 
 def addUsers():
+
     from bs4 import BeautifulSoup
     data = open("html_doc.html", 'r').read()
 
     soup = BeautifulSoup(data)
-
     gender = 'Male'
 
     errors = 0
@@ -135,15 +135,10 @@ def addUsers():
                 errors += 1
                 print "Errors found: ", errors
 
-
-def populateDB():
-    ### Database Population ###
     for i in range(len(MuPMarks)):
         name = MuPMarks.loc[i]['Name']
         id = MuPMarks.loc[i]['ID Number']
-        gender = 'Male'
         f_id = idFormat(id)
-        resultCheck = None
         try:
             print "User present"
             resultCheck = session.query(Student).filter_by(id=f_id).first()
@@ -157,6 +152,9 @@ def populateDB():
             session.commit()
             print "Added ", id, " ", name
 
+
+def addCourses():
+
     ### Add some additional Courses
     session.add(Course(id='CS F241', name='Microprocessors and Interfacing'))
     session.add(Course(id='MATH F211', name='Mathematics III'))
@@ -166,6 +164,8 @@ def populateDB():
 
     print "Added Courses"
 
+
+def addAuthenticationData():
     ### Add some AuthStore data
     ids = ['2015A7PS0033G', '2015A7PS0029G', '2015A7PS0030G', '2015A7PS0031G', '2015A7PS0032G']
     passwords = ['shreyas123', 'gmn0105', 'watchdogs', 'qwerty123', 'fakeaccent']
@@ -177,10 +177,36 @@ def populateDB():
 
     session.commit()
 
-    print "Finish"
+    print "Added Authentication data!"
+
+def populateDB():
+
+    addUsers()
+    addCourses()
+    addAuthenticationData()
+    sample()
+
+def sample():
+
+    session.add(Score(student_id='2015A7PS0033G',
+                      course_id='ECON F211',
+                      name='T2',
+                      score=20))
+    session.add(Score(student_id='2015A7PS0033G',
+                      course_id='ECON F211',
+                      name='T1',
+                      score=18))
+    session.add(Score(student_id='2015A7PS0033G',
+                      course_id='ECON F211',
+                      name='Quiz',
+                      score=20))
+    session.add(Score(student_id='2015A7PS0033G',
+                      course_id='ECON F211',
+                      name='Compre',
+                      score=36))
+    session.commit()
 
 
 if __name__ == '__main__':
-    ## Populate DB
-    addUsers()
+
     populateDB()
