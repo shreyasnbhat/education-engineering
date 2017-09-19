@@ -1,6 +1,5 @@
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from models import Student, Score, AuthStore, Course
+from models import Student, Score, AuthStore, Course,Base
 from sqlalchemy import create_engine
 import pandas as pd
 from db import id_format
@@ -8,15 +7,14 @@ from sqlalchemy.exc import IntegrityError, InvalidRequestError
 import bcrypt
 
 """Sample v1.0"""
-Base = declarative_base()
 engine = create_engine('sqlite:///../sampleV1.db')
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
 db_session = DBSession()
 
 """Global Variable Space"""
-MuPMarks = pd.read_csv('../test_data.csv')
-markFrame = pd.read_csv('../test_data.csv')
+MuPMarks = pd.read_csv('../data/mup.csv')
+markFrame = pd.read_csv('../data/mup.csv')
 markFrame.drop(['Name', 'ID Number', 'Mid Term Grade', 'Pre Compre Grade'], axis=1, inplace=True)
 markColumns = markFrame.columns
 

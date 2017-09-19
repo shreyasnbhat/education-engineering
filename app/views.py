@@ -6,33 +6,18 @@ from sqlalchemy import and_
 import json
 from app import *
 import bcrypt
-
-
-def logger(**kwargs):
-    """
-    This method is a logger function to log any values
-    :param kwargs: Variable arguments
-    """
-    print "-----------------------------------------------------------------------"
-    print "----------------------------Logger-------------------------------------"
-    print "-----------------------------------------------------------------------"
-    for key in kwargs:
-        print key + str(':'), kwargs[key]
-    print "-----------------------------------------------------------------------"
-    print "-----------------------------------------------------------------------"
-    print "-----------------------------------------------------------------------"
+from logger import logger
 
 
 @app.route('/', methods=['GET', 'POST'])
 def getHomePage():
     if request.method == 'GET':
         return render_template('homepage.html')
+
     elif request.method == 'POST':
 
         userid = request.form['bits-id']
         password = request.form['password'].encode('utf-8')
-
-        logger(user_id = userid,password=password)
 
         try:
             user_credentials = db_session.query(AuthStore).filter_by(id=userid).one()
@@ -59,14 +44,17 @@ def getHomePage():
         finally:
             db_session.close()
 
+
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('getHomePage'))
 
+
 @app.route('/testing')
 def tester():
     print db_session.query(Student).all()
+
 
 @app.route('/courses')
 @login_required
@@ -87,6 +75,7 @@ def getCourses():
 
     finally:
         db_session.close()
+
 
 # Need this for admin only
 @app.route('/courses/<string:course_id>')
