@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from db import Base
-import os
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 '''Table Information along with Mappers'''
 class Student(Base):
@@ -51,9 +52,7 @@ class AuthStore(Base):
         return self.id.encode('utf-8')
 
 
-def database_purge():
-    os.remove('./sample.db')
-    print "Database purged Successfully"
+
 
 
 

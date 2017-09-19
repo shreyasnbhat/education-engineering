@@ -1,14 +1,17 @@
 import bcrypt
 import pandas as pd
-
-from db import id_format, create_engine, sessionmaker, Base
+from db import id_format
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 from models import Student, Score, AuthStore, Course
+from sqlalchemy import create_engine
 
 """Sample v2.0"""
-engine = create_engine('sqlite:///../sampleV2.db')
+Base = declarative_base()
+engine = create_engine('sqlite:///sampleV2.db')
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
-session = DBSession()
+db_session = DBSession()
 
 
 def generate_sample_db(path, course_id):
@@ -41,11 +44,11 @@ def generate_sample_db(path, course_id):
             except KeyError:
                 print "No such key was found!"
 
-        session.add(Student(name=name,
-                            id=formatted_student_id,
-                            gender='Male',
-                            scores=score_list))
-        session.commit()
+        db_session.add(Student(name=name,
+                               id=formatted_student_id,
+                               gender='Male',
+                               scores=score_list))
+        db_session.commit()
         print "Added", student_id, name
 
     # Add authentication credentials for test users
@@ -55,17 +58,19 @@ def generate_sample_db(path, course_id):
     for i in range(len(passwords)):
         generated_salt = bcrypt.gensalt()
         phash = bcrypt.hashpw(passwords[i], generated_salt)
-        session.add(AuthStore(id=ids[i],
-                              phash=phash,
-                              salt=generated_salt))
-    session.commit()
+        db_session.add(AuthStore(id=ids[i],
+                                 phash=phash,
+                                 salt=generated_salt))
+    db_session.commit()
     print "Added Authentication credentials"
 
     # Add course data
-    session.add(Course(id='PHY F241', name='Astronomy and Astrophysics'))
-    session.commit()
+    db_session.add(Course(id='PHY F241', name='Astronomy and Astrophysics'))
+    db_session.commit()
     print "Added Course data"
 
 
 if __name__ == '__main__':
     generate_sample_db('../Astro-course-total.csv', 'PHY F241')
+    db_session.close()
+

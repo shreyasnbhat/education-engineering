@@ -1,9 +1,17 @@
 from flask import Flask
 from flask.ext.login import LoginManager
-from models import session,AuthStore
+from db.models import *
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 app = Flask(__name__)
 app.secret_key = 'secret_key'
+
+"""Final Configuration depending upon sample version"""
+engine = create_engine('sqlite:///sampleV2.db')
+Base.metadata.create_all(engine)
+DBSession = sessionmaker(bind=engine)
+db_session = DBSession()
 
 '''
 The login manager contains the code that lets your application and Flask-Login work together, 
@@ -17,6 +25,7 @@ login_manager.login_view = "getHomePage"
 
 @login_manager.user_loader
 def load_user(user_id):
-    return session.query(AuthStore).filter_by(id = str(user_id)).first()
+    var = db_session.query(AuthStore).filter_by(id = str(user_id)).first()
+    return var
 
 from app import views
