@@ -4,12 +4,19 @@ from sqlalchemy.orm import exc
 from app import app
 from sqlalchemy import and_
 import json
-from models import Student, Course, Score, AuthStore, session as dbSession
+from db.models import *
 import bcrypt
 from flask.ext.login import login_user, login_required, logout_user
+from db.samplev2 import DBSession
 
-'''Logging utility for all views'''
+dbSession = DBSession()
+
+
 def logger(**kwargs):
+    """
+    This method is a logger function to log any values
+    :param kwargs: Variable arguments
+    """
     print "-----------------------------------------------------------------------"
     print "----------------------------Logger-------------------------------------"
     print "-----------------------------------------------------------------------"
@@ -27,10 +34,9 @@ def getHomePage():
     elif request.method == 'POST':
         userid = request.form['bits-id']
         password = request.form['password'].encode('utf-8')
-
+        print dbSession.query(Student).all()
         try:
             user_credentials = dbSession.query(AuthStore).filter_by(id=userid).one()
-
             user_credential_salt = user_credentials.salt.encode('utf-8')
             user_credential_phash = user_credentials.phash.encode('utf-8')
 
@@ -93,7 +99,7 @@ def getScoresByStudent(course_id, student_id):
     scores = dbSession.query(Score).filter_by(student_id=student_id).all()
     student = dbSession.query(Student).filter_by(id=student_id).one()
 
-    ### For graphing need to pass the objects in JSON so that they are parsed in Javascript
+    # For graphing need to pass the objects in JSON so that they are parsed in Javascript
     scores_num = json.dumps([i.score for i in scores])
     scores_names = json.dumps([i.name for i in scores])
     return render_template('studentScore.html',
