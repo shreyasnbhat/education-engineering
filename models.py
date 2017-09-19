@@ -13,6 +13,7 @@ markFrame = pd.read_csv('./test_data.csv')
 markFrame.drop(['Name', 'ID Number', 'Mid Term Grade', 'Pre Compre Grade'], axis=1, inplace=True)
 markColumns = markFrame.columns
 
+
 ### Database Setup ###
 Base = declarative_base()
 
@@ -69,14 +70,14 @@ class AuthStore(Base):
    Needs to moved into __init__.py later
    This class should only contain models
 '''
-engine = create_engine('sqlite:///app.db')
+engine = create_engine('sqlite:///sample.db')
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
 def databsePurge():
-    os.remove('./app.db')
+    os.remove('./sample.db')
     print "Database purged Successfully"
 
 
@@ -186,6 +187,50 @@ def populateDB():
     addAuthenticationData()
     sample()
 
+
+def sampleDB():
+
+    """ Change local db name to sample.db before calling this function """
+
+    # Add user data
+    sampleMarks = pd.read_csv('./Astro-course-total.csv')
+    sampleMarkFrame = pd.read_csv('./Astro-course-total.csv')
+    sampleMarkFrame.drop(['Name', 'ID Number'], axis=1, inplace=True)
+    sampleMarkColumns = sampleMarkFrame.columns
+
+    for i in range(len(sampleMarks)):
+        name = sampleMarks.loc[i]['Name']
+        id = sampleMarks.loc[i]['ID Number']
+        f_id = idFormat(id)
+
+        scoreList = []
+
+        for l in sampleMarkColumns:
+            try:
+                print l, sampleMarkFrame.loc[i][l]
+                scoreList.append(Score(student_id=f_id, name=l, course_id='PHY F241', score=sampleMarkFrame.loc[i][l]))
+            except KeyError:
+                print "Error"
+
+        session.add(Student(name=name,id=f_id,gender='Male',scores=scoreList))
+        session.commit()
+        print "Added" , id, name
+
+    # Add authentication  data
+    ids = ['2017A3PS0191G', '2038A3PS191G']
+    passwords = ['student','student']
+    for i in range(len(passwords)):
+        generated_salt = bcrypt.gensalt()
+        phash = bcrypt.hashpw(passwords[i], generated_salt)
+        session.add(AuthStore(id=ids[i], phash=phash, salt=generated_salt))
+
+    session.commit()
+
+    # Add course data
+    session.add(Course(id='PHY F241', name='Astronomy and Astrophysics'))
+    session.commit()
+
+
 def sample():
 
     session.add(Score(student_id='2015A7PS0033G',
@@ -209,4 +254,4 @@ def sample():
 
 if __name__ == '__main__':
 
-    populateDB()
+    sampleDB()

@@ -9,8 +9,6 @@ import bcrypt
 from flask.ext.login import login_user, login_required, logout_user
 
 '''Logging utility for all views'''
-
-
 def logger(**kwargs):
     print "-----------------------------------------------------------------------"
     print "----------------------------Logger-------------------------------------"
