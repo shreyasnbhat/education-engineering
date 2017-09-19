@@ -1,13 +1,11 @@
 import bcrypt
 import pandas as pd
 from db import id_format
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from models import Student, Score, AuthStore, Course
+from models import Student, Score, AuthStore, Course,Base
 from sqlalchemy import create_engine
 
 """Sample v2.0"""
-Base = declarative_base()
 engine = create_engine('sqlite:///../sampleV2.db')
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
@@ -71,6 +69,6 @@ def generate_sample_db(path, course_id):
 
 
 if __name__ == '__main__':
-    generate_sample_db('../Astro-course-total.csv', 'PHY F241')
+    generate_sample_db('../data/astro.csv', 'PHY F241')
     db_session.close()
 
