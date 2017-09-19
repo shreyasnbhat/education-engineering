@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 
 """Sample v2.0"""
 Base = declarative_base()
-engine = create_engine('sqlite:///sampleV2.db')
+engine = create_engine('sqlite:///../sampleV2.db')
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
 db_session = DBSession()
