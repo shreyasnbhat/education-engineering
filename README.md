@@ -36,4 +36,3 @@ This repository is dedicated for the Design Project of Data Mining/Analysis in E
 1. Assuming `feature-branch` is checked out.
 2. Run `git rebase master` to update your branch if it is behind `master`(local)
 3. If conflicts arise fix them and run `git add *` and then `git rebase --continue`
-

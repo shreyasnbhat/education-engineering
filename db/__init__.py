@@ -1,10 +1,3 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
-
-
 def id_format(unformatted_id):
     """
     This function is used to the format any student ID that is present

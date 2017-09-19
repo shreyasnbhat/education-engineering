@@ -1,15 +1,11 @@
 from flask import render_template, request, redirect, url_for
-from flask.globals import session
+from flask.globals import session as session_obj
+from flask.ext.login import login_user, login_required, logout_user
 from sqlalchemy.orm import exc
-from app import app
 from sqlalchemy import and_
 import json
-from db.models import *
+from app import *
 import bcrypt
-from flask.ext.login import login_user, login_required, logout_user
-from db.samplev2 import DBSession
-
-dbSession = DBSession()
 
 
 def logger(**kwargs):
@@ -32,11 +28,14 @@ def getHomePage():
     if request.method == 'GET':
         return render_template('homepage.html')
     elif request.method == 'POST':
+
         userid = request.form['bits-id']
         password = request.form['password'].encode('utf-8')
-        print dbSession.query(Student).all()
+
+        logger(user_id = userid,password=password)
+
         try:
-            user_credentials = dbSession.query(AuthStore).filter_by(id=userid).one()
+            user_credentials = db_session.query(AuthStore).filter_by(id=userid).one()
             user_credential_salt = user_credentials.salt.encode('utf-8')
             user_credential_phash = user_credentials.phash.encode('utf-8')
 
@@ -47,46 +46,60 @@ def getHomePage():
 
             if bcrypt.hashpw(password, user_credential_phash) == user_credential_phash:
                 login_user(user_credentials)
-                session['userid'] = user_credentials.id
+                session_obj['userid'] = user_credentials.id
                 return redirect(url_for('getCourses'))
             else:
                 error = "Wrong username or Password"
                 return render_template('homepage.html', error=error)
 
-
         except exc.NoResultFound:
             error = "No such user exists!"
             return render_template('homepage.html', error=error)
 
+        finally:
+            db_session.close()
 
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('getHomePage'))
 
+@app.route('/testing')
+def tester():
+    print db_session.query(Student).all()
 
 @app.route('/courses')
 @login_required
 def getCourses():
-    try:
-        logger(User_id=session['userid'])
 
-        course_ids = dbSession.query(Score.course_id).filter_by(student_id=session['user_id']).distinct()
-        courses = dbSession.query(Course).filter(Course.id.in_(course_ids)).all()
+    db_session = DBSession()
+    try:
+        logger(User_id=session_obj['userid'])
+
+        course_ids = db_session.query(Score.course_id).filter_by(student_id=session_obj['user_id']).distinct()
+        courses = db_session.query(Course).filter(Course.id.in_(course_ids)).all()
 
         return render_template('courses.html',
                                courses=courses,
-                               user_id=session['userid'])
+                               user_id=session_obj['userid'])
     except exc.NoResultFound:
         return render_template('courses.html')
 
+    finally:
+        db_session.close()
 
-#### Need this for admin only
+# Need this for admin only
 @app.route('/courses/<string:course_id>')
 @login_required
 def getStudentsByCourse(course_id):
-    students = dbSession.query(Student).filter(
+
+    db_session = DBSession()
+
+    students = db_session.query(Student).filter(
         and_(Student.id == Score.student_id, Score.course_id == Course.id, Course.id == course_id)).all()
+
+    db_session.close()
+
     return render_template('students.html',
                            students=students,
                            course_id=course_id)
@@ -95,9 +108,14 @@ def getStudentsByCourse(course_id):
 @app.route('/courses/<string:course_id>/<string:student_id>')
 @login_required
 def getScoresByStudent(course_id, student_id):
-    course = dbSession.query(Course).filter_by(id=course_id).one()
-    scores = dbSession.query(Score).filter_by(student_id=student_id).all()
-    student = dbSession.query(Student).filter_by(id=student_id).one()
+
+    db_session = DBSession()
+
+    course = db_session.query(Course).filter_by(id=course_id).one()
+    scores = db_session.query(Score).filter_by(student_id=student_id).all()
+    student = db_session.query(Student).filter_by(id=student_id).one()
+
+    db_session.close()
 
     # For graphing need to pass the objects in JSON so that they are parsed in Javascript
     scores_num = json.dumps([i.score for i in scores])
