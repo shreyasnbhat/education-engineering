@@ -4,7 +4,7 @@ This repository is dedicated for the Design Project of Data Mining/Analysis in E
 ### Project Technology Stack
 - Flask
 - MaterializeCSS
-- Local DB - (PostrgreSQL/SQLAlchemy) (To-do)
+- Local DB - SQLAlchemy
 - Online DB - Firebase (To-do)
 - Tensorflow (To-do)
 - Vagrant
