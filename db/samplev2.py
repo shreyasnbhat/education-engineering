@@ -2,7 +2,7 @@ import bcrypt
 import pandas as pd
 from db import id_format
 from sqlalchemy.orm import sessionmaker
-from models import Student, Score, AuthStore, Course,Base
+from models import Student, Score, AuthStore, Course, Base, MaxScore
 from sqlalchemy import create_engine
 
 """Sample v2.0"""
@@ -23,7 +23,19 @@ def generate_sample_db(path, course_id):
     sample_marks = pd.read_csv(path)
     sample_mark_frame = pd.read_csv(path)
     sample_mark_frame.drop(['Name', 'ID Number'], axis=1, inplace=True)
+
+    # Any mark column must be of the type mark_name-max_marks
     sample_mark_columns = sample_mark_frame.columns
+
+    for i in sample_mark_columns:
+
+        score_name,score_max = i.strip().split('-')
+
+        # Add score_max to table MaxScores
+        db_session.add(MaxScore(course_id=course_id,
+                                name=score_name,
+                                maxscore=score_max))
+        db_session.commit()
 
     # Format Student ID's and other details to put in the db
     for i in range(len(sample_marks)):
@@ -35,10 +47,13 @@ def generate_sample_db(path, course_id):
 
         for mark_column in sample_mark_columns:
             try:
+                score_name,score_max = mark_column.split('-')
+
+                score = sample_mark_frame.loc[i][mark_column]
                 score_list.append(Score(student_id=formatted_student_id,
-                                        name=mark_column,
+                                        name=score_name,
                                         course_id=course_id,
-                                        score=sample_mark_frame.loc[i][mark_column]))
+                                        score=score))
             except KeyError:
                 print "No such key was found!"
 

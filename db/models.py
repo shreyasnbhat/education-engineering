@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -22,6 +22,14 @@ class Score(Base):
     name = Column(String(20), primary_key=True)
     score = Column(Integer)
 
+
+class MaxScore(Base):
+    __tablename__ =  'maxscores'
+
+    course_id = Column(String(10), primary_key=True)
+    name = Column(String(20), primary_key=True)
+    maxscore = Column(Integer)
+    ForeignKeyConstraint(['course_id','name'],['scores.course_id','scores.name'])
 
 class Course(Base):
     __tablename__ = 'courses'

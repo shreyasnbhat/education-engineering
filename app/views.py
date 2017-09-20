@@ -51,11 +51,6 @@ def logout():
     return redirect(url_for('getHomePage'))
 
 
-@app.route('/testing')
-def tester():
-    print db_session.query(Student).all()
-
-
 @app.route('/courses')
 @login_required
 def getCourses():

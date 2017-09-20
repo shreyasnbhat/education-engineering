@@ -25,8 +25,8 @@ def generateMarkList(i):
     for l in markColumns:
         try:
             id = MuPMarks.loc[i]['ID Number']
-            id = id_format(id)
-            scoreList.append(Score(student_id=id, name=l, course_id='CS F241', score=markFrame.loc[i][l]))
+            f_id = id_format(id)
+            scoreList.append(Score(student_id=f_id, name=l, course_id='CS F241', score=markFrame.loc[i][l]))
         except KeyError:
             return scoreList
 
