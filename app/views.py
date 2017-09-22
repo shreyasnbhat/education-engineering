@@ -16,7 +16,9 @@ def getHomePage():
 
     elif request.method == 'POST':
 
-        userid = request.form['bits-id']
+        db_session = DBSession()
+
+        userid = request.form['bits-id'].encode('utf-8')
         password = request.form['password'].encode('utf-8')
 
         try:
@@ -31,7 +33,7 @@ def getHomePage():
 
             if bcrypt.hashpw(password, user_credential_phash) == user_credential_phash:
                 login_user(user_credentials)
-                session_obj['userid'] = user_credentials.id
+                session_obj['userid'] = user_credentials.id.encode('utf-8')
                 return redirect(url_for('getCourses'))
             else:
                 error = "Wrong username or Password"
@@ -56,15 +58,28 @@ def logout():
 def getCourses():
 
     db_session = DBSession()
+
     try:
         logger(User_id=session_obj['userid'])
 
-        course_ids = db_session.query(Score.course_id).filter_by(student_id=session_obj['user_id']).distinct()
-        courses = db_session.query(Course).filter(Course.id.in_(course_ids)).all()
+        # If session is not created by an admin user then load student courses else load all courses
+        if session_obj['userid'] != 'admin':
 
-        return render_template('courses.html',
-                               courses=courses,
-                               user_id=session_obj['userid'])
+            course_ids = db_session.query(Score.course_id).filter_by(student_id=session_obj['user_id']).distinct()
+            courses = db_session.query(Course).filter(Course.id.in_(course_ids)).all()
+
+            return render_template('courses.html',
+                                   courses=courses,
+                                   user_id=session_obj['userid'],
+                                   admin=False)
+        else:
+            courses = db_session.query(Course).all()
+
+            return render_template('courses.html',
+                                   courses=courses,
+                                   user_id=session_obj['userid'],
+                                   admin=True)
+
     except exc.NoResultFound:
         return render_template('courses.html')
 

@@ -1,22 +1,19 @@
 import bcrypt
+import os
 import pandas as pd
 from db import id_format
 from sqlalchemy.orm import sessionmaker
 from models import Student, Score, AuthStore, Course, Base, MaxScore
 from sqlalchemy import create_engine
 
-"""Sample v2.0"""
-engine = create_engine('sqlite:///../sampleV2.db')
-Base.metadata.create_all(engine)
-DBSession = sessionmaker(bind=engine)
-db_session = DBSession()
 
-
-def generate_sample_db(path, course_id):
+def generate_sample_db(path, course_id, course_name, db_session):
     """
     This function is used to generate sample data for testing and the .db file obtained is sampleV2.db
     :param path: This consists the path of the .csv file to add to the db
     :param course_id: This consists of the course id for the csv file passed
+    :param course_name: This consists the name of the course wrt to the course_id given
+    :param db_session: This consists of the database session for db operations
     """
 
     # Read data from the file specified in path
@@ -28,8 +25,7 @@ def generate_sample_db(path, course_id):
     sample_mark_columns = sample_mark_frame.columns
 
     for i in sample_mark_columns:
-
-        score_name,score_max = i.strip().split('-')
+        score_name, score_max = i.strip().split('-')
 
         # Add score_max to table MaxScores
         db_session.add(MaxScore(course_id=course_id,
@@ -47,7 +43,7 @@ def generate_sample_db(path, course_id):
 
         for mark_column in sample_mark_columns:
             try:
-                score_name,score_max = mark_column.split('-')
+                score_name, score_max = mark_column.split('-')
 
                 score = sample_mark_frame.loc[i][mark_column]
                 score_list.append(Score(student_id=formatted_student_id,
@@ -65,8 +61,8 @@ def generate_sample_db(path, course_id):
         print "Added", student_id, name
 
     # Add authentication credentials for test users
-    ids = ['2017A3PS0191G', '2038A3PS0191G']
-    passwords = ['student', 'student']
+    ids = ['admin']
+    passwords = ['admin']
 
     for i in range(len(passwords)):
         generated_salt = bcrypt.gensalt()
@@ -78,12 +74,51 @@ def generate_sample_db(path, course_id):
     print "Added Authentication credentials"
 
     # Add course data
-    db_session.add(Course(id='PHY F241', name='Astronomy and Astrophysics'))
+    db_session.add(Course(id=course_id, name=course_name))
     db_session.commit()
     print "Added Course data"
 
 
 if __name__ == '__main__':
-    generate_sample_db('../data/astro.csv', 'PHY F241')
-    db_session.close()
 
+    print "Choose database name"
+    print "--------------------"
+    db_name = str(raw_input().strip())
+
+    # Setup database with given input
+    engine = create_engine('sqlite:///../' + db_name + '.db')
+    Base.metadata.create_all(engine)
+    DBSession = sessionmaker(bind=engine)
+    db_session = DBSession()
+
+    print "Choose which file to populate"
+    print "-----------------------------"
+    list_of_files = os.listdir('../data')
+
+    file_id = 0
+
+    for file in list_of_files:
+        print str(file_id) + str('.'), file
+        file_id += 1
+
+    chosen_file_id = int(raw_input().strip())
+
+    path = str('../data/') + list_of_files[chosen_file_id]
+
+    """
+    The file name for the .csv file is defined in FILEFORMAT.md
+    :param course_id: Course ID for the course
+    :param course_name: Course name for the course
+    :param semester: Semester for the course. Can be either 1 or 2
+    :param year: Year of conduction of the course
+    """
+    course_id, course_name_unformatted, semester, year = list_of_files[chosen_file_id].split('_')
+    course_name = " ".join(course_name_unformatted.split('.'))
+
+    # Generate the sample here
+    generate_sample_db(path,
+                       course_id,
+                       course_name,
+                       db_session)
+
+    db_session.close()
