@@ -1,5 +1,5 @@
 from sqlalchemy.orm import sessionmaker
-from models import Student, Score, AuthStore, Course,Base
+from models import Student, Score, AuthStore, Course, Base
 from sqlalchemy import create_engine
 import pandas as pd
 from db import id_format
@@ -13,20 +13,27 @@ DBSession = sessionmaker(bind=engine)
 db_session = DBSession()
 
 """Global Variable Space"""
-MuPMarks = pd.read_csv('../data/mup.csv')
-markFrame = pd.read_csv('../data/mup.csv')
+filename = "mup"
+marks_data = pd.read_csv('../data/' + filename + '.csv')
+markFrame = pd.read_csv('../data/' + filename + '.csv')
 markFrame.drop(['Name', 'ID Number', 'Mid Term Grade', 'Pre Compre Grade'], axis=1, inplace=True)
 markColumns = markFrame.columns
 
 
-def generateMarkList(i):
-    scoreList = []
+def generateMarkList(id):
+    """This function is used to generate the marks list of the required course from the database on the
+       basis of unique Student Id
+    :param id: Id of the student whose mark list for a course has to be generated
+    :returns scoreList: a list of marks of all evaluated components of the students"""
 
-    for l in markColumns:
+    scoreList = []
+    marks_data.set_index('ID Number', inplace=True)
+    for columns in markColumns:
         try:
-            id = MuPMarks.loc[i]['ID Number']
-            f_id = id_format(id)
-            scoreList.append(Score(student_id=f_id, name=l, course_id='CS F241', score=markFrame.loc[i][l]))
+            student_name = marks_data.loc[id]['Name']
+            student_id = id_format(id)
+            scoreList.append(
+                Score(student_id=student_id, name=student_name, course_id='CS F241', score=markFrame.loc[id][columns]))
         except KeyError:
             return scoreList
 
@@ -34,14 +41,18 @@ def generateMarkList(i):
 
 
 def addUsers():
+    """Currently adds whole user data scraped from swd site along with scores of the course.
+       However, the intended purpose is to add a single user when the user signs up along with his scores and other data to the database
+    :returns does not return anything"""
+
     from bs4 import BeautifulSoup
     data = open("html_doc.html", 'r').read()
 
-    soup = BeautifulSoup(data)
+    soup = BeautifulSoup(data, "lxml")
     gender = 'Male'
 
     errors = 0
-
+    # Populate the DB with Data scraped from SWD site
     for i in soup.find_all('tr'):
         t = [j.string for j in i.find_all('td')]
         if len(t) > 2:
@@ -65,27 +76,30 @@ def addUsers():
                 print "Invalid Request at", id, name
                 errors += 1
                 print "Errors found: ", errors
+    marks_data.reset_index()
 
-    for i in range(len(MuPMarks)):
-        name = MuPMarks.loc[i]['Name']
-        id = MuPMarks.loc[i]['ID Number']
-        f_id = id_format(id)
+    # Update the DB with scores from the uploaded csv file
+    # If user is not present then then add the user
+    for i in range(len(marks_data)):
+        name = marks_data.loc[i]['Name']
+        id = marks_data.loc[i]['ID Number']
+        student_id = id_format(id)
         try:
             print "User present"
-            resultCheck = db_session.query(Student).filter_by(id=f_id).first()
+            resultCheck = db_session.query(Student).filter_by(id=student_id).first()
             resultCheck.scores = generateMarkList(i)
             db_session.commit()
         except:
             print "User not present"
-            print f_id
-            student = Student(id=f_id, name=name, gender=gender, scores=generateMarkList(i))
+            print student_id
+            student = Student(id=student_id, name=name, gender=gender, scores=generateMarkList(i))
             db_session.add(student)
             db_session.commit()
             print "Added ", id, " ", name
 
 
 def addCourses():
-    ### Add some additional Courses
+    # Add some additional Courses
     db_session.add(Course(id='CS F241', name='Microprocessors and Interfacing'))
     db_session.add(Course(id='MATH F211', name='Mathematics III'))
     db_session.add(Course(id='ECON F211', name='Principle Of Economics'))
@@ -96,9 +110,10 @@ def addCourses():
 
 
 def addAuthenticationData():
-    ### Add some AuthStore data
+    # Add some AuthStore data
     ids = ['2015A7PS0033G', '2015A7PS0029G', '2015A7PS0030G', '2015A7PS0031G', '2015A7PS0032G']
     passwords = ['shreyas123', 'gmn0105', 'watchdogs', 'qwerty123', 'fakeaccent']
+
     for i in range(len(passwords)):
         generated_salt = bcrypt.gensalt()
         phash = bcrypt.hashpw(passwords[i], generated_salt)
