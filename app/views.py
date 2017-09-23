@@ -1,12 +1,14 @@
-from flask import render_template, request, redirect, url_for, abort
+from flask import render_template, request, redirect, url_for, abort, send_from_directory
 from flask.globals import session as session_obj
 from flask.ext.login import login_user, login_required, logout_user
 from sqlalchemy.orm import exc
 from sqlalchemy import and_
 import json
+import os
 from app import *
 import bcrypt
 from logger import logger
+from werkzeug.utils import secure_filename
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -53,10 +55,30 @@ def logout():
     return redirect(url_for('getHomePage'))
 
 
+# Need to make UI
+@login_required
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            logger(request=request)
+            print "No file was sent"
+
+        upload_file = request.files['file']
+
+        if upload_file.filename == '':
+            print "File wasn't selected"
+
+        elif upload_file and allowed_file(upload_file.filename):
+            upload_file_filename_secure = secure_filename(upload_file.filename)
+            upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], upload_file_filename_secure))
+            return send_from_directory(
+                UPLOAD_FOLDER, upload_file_filename_secure, as_attachment=True)
+
+
 @app.route('/courses')
 @login_required
 def getCourses():
-
     db_session = DBSession()
 
     try:
@@ -91,7 +113,6 @@ def getCourses():
 @app.route('/courses/<string:course_id>')
 @login_required
 def getStudentsByCourse(course_id):
-
     if session_obj['userid'] == 'admin':
         db_session = DBSession()
 
@@ -112,7 +133,6 @@ def getStudentsByCourse(course_id):
 @app.route('/courses/<string:course_id>/<string:student_id>')
 @login_required
 def getScoresByStudent(course_id, student_id):
-
     db_session = DBSession()
 
     course = db_session.query(Course).filter_by(id=course_id).one()
