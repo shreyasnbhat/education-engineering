@@ -61,8 +61,8 @@ def generate_sample_db(path, course_id, course_name, db_session):
         print "Added", student_id, name
 
     # Add authentication credentials for test users
-    ids = ['admin']
-    passwords = ['admin']
+    ids = ['2017A3PS0191G','admin']
+    passwords = ['student','admin']
 
     for i in range(len(passwords)):
         generated_salt = bcrypt.gensalt()

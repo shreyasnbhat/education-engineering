@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, abort
 from flask.globals import session as session_obj
 from flask.ext.login import login_user, login_required, logout_user
 from sqlalchemy.orm import exc
@@ -92,16 +92,21 @@ def getCourses():
 @login_required
 def getStudentsByCourse(course_id):
 
-    db_session = DBSession()
+    if session_obj['userid'] == 'admin':
+        db_session = DBSession()
 
-    students = db_session.query(Student).filter(
-        and_(Student.id == Score.student_id, Score.course_id == Course.id, Course.id == course_id)).all()
+        students = db_session.query(Student).filter(
+            and_(Student.id == Score.student_id, Score.course_id == Course.id, Course.id == course_id)).all()
 
-    db_session.close()
+        db_session.close()
 
-    return render_template('students.html',
-                           students=students,
-                           course_id=course_id)
+        return render_template('students.html',
+                               students=students,
+                               course_id=course_id)
+    else:
+        # If not a admin raise a 404 Not Found
+        abort(404)
+        return redirect(url_for('getCourses'))
 
 
 @app.route('/courses/<string:course_id>/<string:student_id>')
