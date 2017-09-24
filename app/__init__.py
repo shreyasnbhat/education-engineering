@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 # Environment variables for uploads
 UPLOAD_FOLDER = '/home/shreyas/Projects/education-engineering/data'
-ALLOWED_EXTENSIONS = {'pdf', 'csv'}
+ALLOWED_EXTENSIONS = {'csv', 'pdf'}
 
 # Flask App initialization
 app = Flask(__name__)
