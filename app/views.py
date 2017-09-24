@@ -55,25 +55,41 @@ def logout():
     return redirect(url_for('getHomePage'))
 
 
-# Need to make UI
 @login_required
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            logger(request=request)
-            print "No file was sent"
 
-        upload_file = request.files['file']
+    if request.method == 'GET':
+        if session_obj['userid'] == 'admin':
+            return render_template('upload.html')
+        else:
+            return redirect(url_for('getHomePage'))
 
-        if upload_file.filename == '':
-            print "File wasn't selected"
+    elif request.method == 'POST':
+        if session_obj['userid'] == 'admin':
+            if 'file' not in request.files:
+                logger(request=request)
+                print "No file was sent"
 
-        elif upload_file and allowed_file(upload_file.filename):
-            upload_file_filename_secure = secure_filename(upload_file.filename)
-            upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], upload_file_filename_secure))
-            return send_from_directory(
-                UPLOAD_FOLDER, upload_file_filename_secure, as_attachment=True)
+            upload_file = request.files['file']
+
+            if upload_file.filename == '':
+                error = "File wasn't selected!"
+                print "File wasn't selected"
+                return render_template('upload.html',error=error)
+
+            elif upload_file and allowed_file(upload_file.filename):
+                upload_file_filename_secure = secure_filename(upload_file.filename)
+                upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], upload_file_filename_secure))
+                return send_from_directory(UPLOAD_FOLDER,
+                                           upload_file_filename_secure, as_attachment=True)
+
+            error = "Incorrect file format was chosen!"
+            return render_template('upload.html',error=error)
+
+        else:
+            print request.path
+            abort(400)
 
 
 @app.route('/courses')
