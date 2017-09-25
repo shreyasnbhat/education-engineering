@@ -12,7 +12,7 @@
 <body>
 <nav>
     <div class="nav-wrapper orange accent-3">
-        <a href="{{url_for('getCourses')}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
+        <a href="{{url_for('getCourses',admin=admin)}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
             <li class="large-font"><a href="{{url_for('logout')}}">Logout</a></li>
         </ul>
@@ -38,5 +38,12 @@
     <h3>You have no Subjects currently!</h3>
     {% endif %}
 </div>
+{% if admin %}
+<div class="block-style">
+    <form action="{{url_for('upload')}}">
+        <input type="submit" value="Upload File" class="btn waves-effect waves-light"/>
+    </form>
+</div>
+{% endif %}
 </body>
 </html>

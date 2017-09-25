@@ -24,7 +24,7 @@
     <ul class="collection">
         {% for student in students %}
         <li class="collection-item avatar">
-            <a href="/courses/{{course_id}}/{{student.id}}">
+            <a href="{{url_for('getScoresByStudent',course_id=course_id,student_id=student.id)}}">
             <img src="{{url_for('static',filename='img/user_placeholder.png')}}" alt="" class="circle"><span
                     class="title"><strong><p class="black-font">{{student.name}}</p></strong></span>
             <p class="black-font">{{student.gender}} <br>
