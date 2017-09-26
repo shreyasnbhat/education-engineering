@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, abort, send_from_directory
+from flask import render_template, request, redirect, url_for, abort, flash
 from flask.globals import session as session_obj
 from flask.ext.login import login_user, login_required, logout_user
 from sqlalchemy.orm import exc
@@ -81,8 +81,8 @@ def upload():
             elif upload_file and allowed_file(upload_file.filename):
                 upload_file_filename_secure = secure_filename(upload_file.filename)
                 upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], upload_file_filename_secure))
-                return send_from_directory(UPLOAD_FOLDER,
-                                           upload_file_filename_secure, as_attachment=True)
+                flash('Upload Successfull!')
+                return redirect(url_for('upload'))
 
             error = "Incorrect file format was chosen!"
             return render_template('upload.html',error=error)
