@@ -5,9 +5,11 @@ from sqlalchemy.orm import exc
 from sqlalchemy import and_
 import json
 import os
+import time
 from app import *
 import bcrypt
 from logger import logger
+from db.samplev2 import generate_sample_db
 from werkzeug.utils import secure_filename
 
 
@@ -49,6 +51,7 @@ def getHomePage():
             db_session.close()
 
 
+@login_required
 @app.route('/logout')
 def logout():
     logout_user()
@@ -58,6 +61,8 @@ def logout():
 @login_required
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
+
+    db_session = DBSession()
 
     if request.method == 'GET':
         if session_obj['userid'] == 'admin':
@@ -76,16 +81,38 @@ def upload():
             if upload_file.filename == '':
                 error = "File wasn't selected!"
                 print "File wasn't selected"
-                return render_template('upload.html',error=error)
+                return render_template('upload.html', error=error)
 
             elif upload_file and allowed_file(upload_file.filename):
                 upload_file_filename_secure = secure_filename(upload_file.filename)
                 upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], upload_file_filename_secure))
+                print "Uploaded file successfully"
                 flash('Upload Successfull!')
+
+                path = os.path.join(app.config['UPLOAD_FOLDER'], upload_file_filename_secure)
+                course_id, course_name_unformatted, semester, year = upload_file_filename_secure.split('_')
+                course_name = " ".join(course_name_unformatted.split('.'))
+                print "The path is: " + path
+
+                while not os.path.exists(path):
+                    print "Waiting for file to be visible"
+                    time.sleep(1)
+
+                if os.path.isfile(path):
+                    print "Now the file is available"
+                    generate_sample_db(path,
+                                       course_id,
+                                       course_name,
+                                       db_session)
+                else:
+                    raise ValueError("%s isn't a file!" % path)
+
+                db_session.close()
+
                 return redirect(url_for('upload'))
 
             error = "Incorrect file format was chosen!"
-            return render_template('upload.html',error=error)
+            return render_template('upload.html', error=error)
 
         else:
             print request.path
@@ -152,7 +179,7 @@ def getScoresByStudent(course_id, student_id):
     db_session = DBSession()
 
     course = db_session.query(Course).filter_by(id=course_id).one()
-    scores = db_session.query(Score).filter_by(student_id=student_id).all()
+    scores = db_session.query(Score).filter_by(student_id=student_id,course_id=course_id).all()
     student = db_session.query(Student).filter_by(id=student_id).one()
 
     db_session.close()

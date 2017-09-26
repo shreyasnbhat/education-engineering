@@ -1,5 +1,3 @@
-from operator import and_
-
 import bcrypt
 import os
 import pandas as pd
@@ -12,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 
 def generate_sample_db(path, course_id, course_name, db_session):
     """
-    This function is used to generate sample data for testing and the .db file obtained is sampleV2.db
+    This function is used to populate the database with a csv file
     :param path: This consists the path of the .csv file to add to the db
     :param course_id: This consists of the course id for the csv file passed
     :param course_name: This consists the name of the course wrt to the course_id given
@@ -38,6 +36,8 @@ def generate_sample_db(path, course_id, course_name, db_session):
             db_session.commit()
         except IntegrityError:
             db_session.rollback()
+
+            # Update the Max Score
             temp = db_session.query(MaxScore).filter_by(course_id=course_id, name=score_name)
             temp.maxscore = score_max
             db_session.commit()
@@ -48,18 +48,17 @@ def generate_sample_db(path, course_id, course_name, db_session):
         student_id = sample_marks.loc[i]['ID Number']
         formatted_student_id = id_format(student_id)
 
-        # Student Entry Add
+        # Student Entry Addition to db
         try:
             db_session.add(Student(name=name,
                                    id=formatted_student_id,
                                    gender='Male'))
             db_session.commit()
+            print "Added ", name , formatted_student_id
         except IntegrityError:
             db_session.rollback()
 
-        print "Added", student_id, name
-
-        # Scores Add
+        # Add scores of the student
         for mark_column in sample_mark_columns:
             score_name, score_max = mark_column.strip().split('-')
             score = sample_mark_frame.loc[i][mark_column]
@@ -78,7 +77,7 @@ def generate_sample_db(path, course_id, course_name, db_session):
                 old_score.score = score
                 db_session.commit()
 
-    # Add authentication credentials for test users
+    # Add authentication credentials for users. Default password set.
     ids = [i.id for i in db_session.query(Student).all()]
     passwords = ['student']
 
