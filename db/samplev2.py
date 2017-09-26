@@ -1,3 +1,5 @@
+from operator import and_
+
 import bcrypt
 import os
 import pandas as pd
@@ -5,6 +7,7 @@ from db import id_format
 from sqlalchemy.orm import sessionmaker
 from models import Student, Score, AuthStore, Course, Base, MaxScore
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 
 
 def generate_sample_db(path, course_id, course_name, db_session):
@@ -27,56 +30,88 @@ def generate_sample_db(path, course_id, course_name, db_session):
     for i in sample_mark_columns:
         score_name, score_max = i.strip().split('-')
 
-        # Add score_max to table MaxScores
-        db_session.add(MaxScore(course_id=course_id,
-                                name=score_name,
-                                maxscore=score_max))
-        db_session.commit()
+        # Add score_max to table MaxScores if not present else update
+        try:
+            db_session.add(MaxScore(course_id=course_id,
+                                    name=score_name,
+                                    maxscore=score_max))
+            db_session.commit()
+        except IntegrityError:
+            db_session.rollback()
+            temp = db_session.query(MaxScore).filter_by(course_id=course_id, name=score_name)
+            temp.maxscore = score_max
+            db_session.commit()
 
-    # Format Student ID's and other details to put in the db
+    # Format Student ID's and other details to put in the db if the student is not already present
     for i in range(len(sample_marks)):
         name = sample_marks.loc[i]['Name']
         student_id = sample_marks.loc[i]['ID Number']
         formatted_student_id = id_format(student_id)
 
-        score_list = []
+        # Student Entry Add
+        try:
+            db_session.add(Student(name=name,
+                                   id=formatted_student_id,
+                                   gender='Male'))
+            db_session.commit()
+        except IntegrityError:
+            db_session.rollback()
 
-        for mark_column in sample_mark_columns:
-            try:
-                score_name, score_max = mark_column.split('-')
-
-                score = sample_mark_frame.loc[i][mark_column]
-                score_list.append(Score(student_id=formatted_student_id,
-                                        name=score_name,
-                                        course_id=course_id,
-                                        score=score))
-            except KeyError:
-                print "No such key was found!"
-
-        db_session.add(Student(name=name,
-                               id=formatted_student_id,
-                               gender='Male',
-                               scores=score_list))
-        db_session.commit()
         print "Added", student_id, name
 
-    # Add authentication credentials for test users
-    ids = ['2017A3PS0191G','admin','2015A7B40001G']
-    passwords = ['student','admin','sudeep']
+        # Scores Add
+        for mark_column in sample_mark_columns:
+            score_name, score_max = mark_column.strip().split('-')
+            score = sample_mark_frame.loc[i][mark_column]
 
-    for i in range(len(passwords)):
+            try:
+                db_session.add(Score(student_id=formatted_student_id,
+                                     name=score_name,
+                                     course_id=course_id,
+                                     score=score))
+                db_session.commit()
+            except IntegrityError:
+                db_session.rollback()
+                old_score = db_session.query(Score).filter_by(student_id=formatted_student_id,
+                                                              name=score_name,
+                                                              course_id=course_id).one()
+                old_score.score = score
+                db_session.commit()
+
+    # Add authentication credentials for test users
+    ids = [i.id for i in db_session.query(Student).all()]
+    passwords = ['student']
+
+    for i in range(len(ids)):
         generated_salt = bcrypt.gensalt()
-        phash = bcrypt.hashpw(passwords[i], generated_salt)
-        db_session.add(AuthStore(id=ids[i],
-                                 phash=phash,
-                                 salt=generated_salt))
-    db_session.commit()
+        phash = bcrypt.hashpw(passwords[0], generated_salt)
+        try:
+            db_session.add(AuthStore(id=ids[i],
+                                     phash=phash,
+                                     salt=generated_salt))
+            db_session.commit()
+        except IntegrityError:
+            db_session.rollback()
+
+    # Add admin login credentials
+    admin_login = 'admin'
+    admin_password = 'admin'
+    generated_salt_admin = bcrypt.gensalt()
+    phash_admin = bcrypt.hashpw(admin_password,generated_salt_admin)
+    try:
+        db_session.add(AuthStore(id=admin_login,phash=phash_admin,salt=generated_salt_admin))
+        db_session.commit()
+    except IntegrityError:
+        db_session.rollback()
+
     print "Added Authentication credentials"
 
     # Add course data
-    db_session.add(Course(id=course_id, name=course_name))
-    db_session.commit()
-    print "Added Course data"
+    try:
+        db_session.add(Course(id=course_id, name=course_name))
+        db_session.commit()
+    except IntegrityError:
+        db_session.rollback()
 
 
 if __name__ == '__main__':
