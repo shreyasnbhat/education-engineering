@@ -5,7 +5,7 @@ This repository is dedicated for the Design Project of Data Mining/Analysis in E
 - Flask
 - MaterializeCSS
 - Local DB - SQLAlchemy
-- Online DB - Firebase (To-do)
+- Task Queue - Celery + Redis(Broker)
 - Tensorflow (To-do)
 - Vagrant
 
