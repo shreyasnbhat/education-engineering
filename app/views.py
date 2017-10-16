@@ -58,11 +58,43 @@ def logout():
     return redirect(url_for('getHomePage'))
 
 
+@celery.task
+def upload_async(upload_file_filename_secure):
+    """
+    Celery task to upload files and populate database asynchronously
+    :param upload_file_filename_secure: Secure file name to load filename
+    :return:
+    """
+    with app.app_context():
+        print "Started"
+        db_session = DBSession()
+
+        path = os.path.join(app.config['UPLOAD_FOLDER'], upload_file_filename_secure)
+        course_id, course_name_unformatted, semester, year = upload_file_filename_secure.split('_')
+        course_name = " ".join(course_name_unformatted.split('.'))
+        print "The path is: " + path
+
+        while not os.path.exists(path):
+            print "Waiting for file to be visible"
+            time.sleep(1)
+
+        if os.path.isfile(path):
+            print "Now the file is available"
+            generate_sample_db(path,
+                               course_id,
+                               course_name,
+                               db_session)
+        else:
+            raise ValueError("%s isn't a file!" % path)
+
+        db_session.close()
+        print "Finished"
+
+
 @login_required
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
 
-    db_session = DBSession()
 
     if request.method == 'GET':
         if session_obj['userid'] == 'admin':
@@ -89,25 +121,7 @@ def upload():
                 print "Uploaded file successfully"
                 flash('Upload Successfull!')
 
-                path = os.path.join(app.config['UPLOAD_FOLDER'], upload_file_filename_secure)
-                course_id, course_name_unformatted, semester, year = upload_file_filename_secure.split('_')
-                course_name = " ".join(course_name_unformatted.split('.'))
-                print "The path is: " + path
-
-                while not os.path.exists(path):
-                    print "Waiting for file to be visible"
-                    time.sleep(1)
-
-                if os.path.isfile(path):
-                    print "Now the file is available"
-                    generate_sample_db(path,
-                                       course_id,
-                                       course_name,
-                                       db_session)
-                else:
-                    raise ValueError("%s isn't a file!" % path)
-
-                db_session.close()
+                upload_async.delay(upload_file_filename_secure)
 
                 return redirect(url_for('upload'))
 

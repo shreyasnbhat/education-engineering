@@ -3,6 +3,7 @@ from flask.ext.login import LoginManager
 from db.models import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from celery import Celery
 
 # Environment variables for uploads
 UPLOAD_FOLDER = '/home/shreyas/Projects/education-engineering/data'
@@ -13,6 +14,14 @@ app = Flask(__name__)
 app.secret_key = 'secret_key'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Celery configuration with Redis
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+
+# Initialize Celery
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
 
 # Final Configuration depending upon sample version
 engine = create_engine('sqlite:///sampleV2.db')
