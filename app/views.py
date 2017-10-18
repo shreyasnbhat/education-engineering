@@ -38,6 +38,7 @@ def getHomePage():
             if bcrypt.hashpw(password, user_credential_phash) == user_credential_phash:
                 login_user(user_credentials)
                 session_obj['userid'] = user_credentials.id.encode('utf-8')
+                session_obj['isAdmin'] = db_session.query(AuthStore.isAdmin).filter_by(id=session_obj['userid']).one()[0]
                 return redirect(url_for('getCourses'))
             else:
                 error = "Wrong username or Password"
@@ -96,14 +97,15 @@ def upload_async(upload_file_filename_secure):
 def upload():
 
 
+
     if request.method == 'GET':
-        if session_obj['userid'] == 'admin':
+        if session_obj['isAdmin']:
             return render_template('upload.html')
         else:
             return redirect(url_for('getHomePage'))
 
     elif request.method == 'POST':
-        if session_obj['userid'] == 'admin':
+        if session_obj['isAdmin']:
             if 'file' not in request.files:
                 logger(request=request)
                 print "No file was sent"
@@ -142,7 +144,7 @@ def getCourses():
         logger(User_id=session_obj['userid'])
 
         # If session is not created by an admin user then load student courses else load all courses
-        if session_obj['userid'] != 'admin':
+        if not session_obj['isAdmin']:
 
             course_ids = db_session.query(Score.course_id).filter_by(student_id=session_obj['user_id']).distinct()
             courses = db_session.query(Course).filter(Course.id.in_(course_ids)).all()
@@ -170,7 +172,7 @@ def getCourses():
 @app.route('/courses/<string:course_id>')
 @login_required
 def getStudentsByCourse(course_id):
-    if session_obj['userid'] == 'admin':
+    if session_obj['isAdmin']:
         db_session = DBSession()
 
         students = db_session.query(Student).filter(

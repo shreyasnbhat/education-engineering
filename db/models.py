@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, ForeignKeyConstraint,Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -46,6 +46,7 @@ class AuthStore(Base):
     id = Column(String(10), primary_key=True)
     salt = Column(String(50))
     phash = Column(String(50))
+    isAdmin = Column(Boolean())
 
     def is_authenticated(self):
         return True
@@ -60,7 +61,11 @@ class AuthStore(Base):
         return self.id.encode('utf-8')
 
 
+class SuperStore(Base):
+    __tablename__ = 'superstore'
 
+    id = Column(String(10),primary_key=True)
+    isSuper = Column(Boolean())
 
 
 

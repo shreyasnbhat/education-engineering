@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from db import id_format
 from sqlalchemy.orm import sessionmaker
-from models import Student, Score, AuthStore, Course, Base, MaxScore
+from models import Student, Score, AuthStore, Course, Base, MaxScore,SuperStore
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 
@@ -87,7 +87,7 @@ def generate_sample_db(path, course_id, course_name, db_session):
         try:
             db_session.add(AuthStore(id=ids[i],
                                      phash=phash,
-                                     salt=generated_salt))
+                                     salt=generated_salt,isAdmin=False))
             db_session.commit()
         except IntegrityError:
             db_session.rollback()
@@ -98,7 +98,13 @@ def generate_sample_db(path, course_id, course_name, db_session):
     generated_salt_admin = bcrypt.gensalt()
     phash_admin = bcrypt.hashpw(admin_password,generated_salt_admin)
     try:
-        db_session.add(AuthStore(id=admin_login,phash=phash_admin,salt=generated_salt_admin))
+        db_session.add(AuthStore(id=admin_login,phash=phash_admin,salt=generated_salt_admin,isAdmin=True))
+        db_session.commit()
+    except IntegrityError:
+        db_session.rollback()
+
+    try:
+        db_session.add(SuperStore(id=admin_login,isSuper=True))
         db_session.commit()
     except IntegrityError:
         db_session.rollback()
