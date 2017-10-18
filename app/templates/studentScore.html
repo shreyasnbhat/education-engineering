@@ -7,7 +7,6 @@
     <link href="{{url_for('static', filename='css/materialize.min.css')}}" rel="stylesheet">
     <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/epoch.min.css')}}">
 
     <!-- Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -15,7 +14,7 @@
 </head>
 <body>
 <nav>
-    <div class="nav-wrapper orange accent-3">
+    <div class="nav-wrapper orange accent-3 no-margin">
         <a href="{{url_for('getCourses')}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
             <li class="large-font"><a href="{{url_for('getCourses')}}">Courses</a></li>
@@ -23,58 +22,113 @@
         </ul>
     </div>
 </nav>
-<div  class="block-style">
-    <h4>Graphs</h4>
+<div class="blue-grey lighten-3 block-style">
+        <h4>Graphs</h4>
 </div>
-<hr>
 <div id="scoreGraph"></div>
 <script>
-var score_labels = JSON.parse({{x_|tojson}})
-var scores_numbers = JSON.parse({{y_|tojson}})
-var data = [
-  {
-    x: score_labels,
-    y: scores_numbers,
-    type: 'bar',
-    name: 'Scores',
-    marker: {color: '#ff6e40' }
-  },
-  { x: score_labels,
-    y: scores_numbers,
-    type: 'scatter',
-    name: 'Performance',
-    marker: {color: '#993300' }
-  }
-];
-var layout = {
-    title: 'Scores',
-    yaxis: {tickfont: {
-        size: 14
-    }},
-    xaxis: {
-        title: 'Tests',
-        titlefont: {
-            size: 16,
-            color: 'rgb(107, 107, 107)'
-        },
-        tickfont: {
-            size: 14,
-            color: 'rgb(107, 107, 107)'
+    var score_labels = JSON.parse({{x_|tojson}})
+    var scores_numbers = JSON.parse({{y_|tojson}})
+
+    // Variables for visualization split
+    var test_labels = [];
+    var test_scores = [];
+    var quiz_labels = [];
+    var quiz_scores = [];
+    var assignment_labels = [];
+    var assignment_scores = [];
+
+    for (var i = 0; i < score_labels.length; i++) {
+        if (score_labels[i].toLowerCase().indexOf('quiz') !== -1) {
+            quiz_labels.push(score_labels[i]);
+            quiz_scores.push(scores_numbers[i]);
+        } else if (score_labels[i].toLowerCase().indexOf('ass') !== -1) {
+            assignment_labels.push(score_labels[i]);
+            assignment_scores.push(scores_numbers[i]);
+        } else if (score_labels[i].toLowerCase().indexOf('test') !== -1 || score_labels[i].toLowerCase().indexOf('compre') !== -1 || score_labels[i].toLowerCase().indexOf('term') !== -1) {
+            test_labels.push(score_labels[i]);
+            test_scores.push(scores_numbers[i]);
         }
-    },
-    legend: {
-        x: 0,
-        y: 1.0,
-        bgcolor: 'rgba(255, 255, 255, 0)',
-        bordercolor: 'rgba(255, 255, 255, 0)'
     }
-};
-Plotly.newPlot('scoreGraph', data,layout);
+
+    var testBarChart = {
+        x: test_labels,
+        y: test_scores,
+        type: 'bar',
+        name: 'Tests',
+        marker: {color: '#64b5f6'}
+    };
+
+    var quizBarChart = {
+        x: quiz_labels,
+        y: quiz_scores,
+        type: 'bar',
+        name: 'Quizzes',
+        marker: {color: '#81c784'},
+        xaxis: 'x2',
+        yaxis: 'y2'
+    };
+
+    var assignmentsBarChart = {
+        x: assignment_labels,
+        y: assignment_scores,
+        type: 'bar',
+        name: 'Assignments',
+        marker: {color: '#ffb74d'},
+        xaxis: 'x3',
+        yaxis: 'y3'
+    };
+
+    var completeBarChart = {
+        x: score_labels,
+        y: scores_numbers,
+        type: 'bar',
+        name: 'Scores',
+        marker: {color: '#ff6e40'},
+        xaxis: 'x4',
+        yaxis: 'y4'
+    };
+
+    var data = [testBarChart,quizBarChart,assignmentsBarChart,completeBarChart];
+
+    var layout = {
+        yaxis: {domain: [0.733, 1]},
+        xaxis2: {
+            domain: [0,0.4],
+            anchor: 'y2'},
+        yaxis2: {
+            domain: [0.366, 0.633],
+            anchor: 'x2'
+        },
+        xaxis3: {
+            domain: [0.6,1],
+            anchor: 'y3'
+            },
+        yaxis3: {
+            domain: [0.366, 0.633],
+            anchor: 'x3'
+        },
+        xaxis4: {
+            anchor: 'y4'
+        },
+        yaxis4: {
+            domain: [0, 0.266],
+            anchor: 'x4'
+        },
+        height: 1000,
+        width: 1500,
+        font: {
+            family: 'Courier New, monospace',
+            size: 18,
+            color: '#7f7f7f'
+            }
+    };
+
+    Plotly.newPlot('scoreGraph', data, layout);
 </script>
-<div  class="block-style">
-    <h4>Scores</h4>
+<div class="blue-grey lighten-3 block-style">
+        <h4>Scores</h4>
 </div>
-<hr>
 <div class="block-style">
     {% if scores %}
     <ul class="collection">
@@ -87,7 +141,7 @@ Plotly.newPlot('scoreGraph', data,layout);
             {% endfor %}
     </ul>
     {% else %}
-    <h3>Gand Mara</h3>
+    <h3>Nothing Here Mate</h3>
     {% endif %}
 </div>
 </body>
