@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from db import id_format
 from sqlalchemy.orm import sessionmaker
-from models import Student, Score, AuthStore, Course, Base, MaxScore,SuperStore
+from models import *
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 
@@ -54,7 +54,7 @@ def generate_sample_db(path, course_id, course_name, db_session):
                                    id=formatted_student_id,
                                    gender='Male'))
             db_session.commit()
-            print "Added ", name , formatted_student_id
+            print "Added ", name, formatted_student_id
         except IntegrityError:
             db_session.rollback()
 
@@ -87,27 +87,35 @@ def generate_sample_db(path, course_id, course_name, db_session):
         try:
             db_session.add(AuthStore(id=ids[i],
                                      phash=phash,
-                                     salt=generated_salt,isAdmin=False))
+                                     salt=generated_salt, isAdmin=False))
             db_session.commit()
         except IntegrityError:
             db_session.rollback()
 
     # Add admin login credentials
-    admin_login = 'admin'
-    admin_password = 'admin'
-    generated_salt_admin = bcrypt.gensalt()
-    phash_admin = bcrypt.hashpw(admin_password,generated_salt_admin)
-    try:
-        db_session.add(AuthStore(id=admin_login,phash=phash_admin,salt=generated_salt_admin,isAdmin=True))
-        db_session.commit()
-    except IntegrityError:
-        db_session.rollback()
+    admin_ids = ['admin']
+    admin_names = ['Shreyas']
+    admin_passwords = ['admin']
 
-    try:
-        db_session.add(SuperStore(id=admin_login,isSuper=True))
-        db_session.commit()
-    except IntegrityError:
-        db_session.rollback()
+    for i in range(len(admin_ids)):
+        generated_salt = bcrypt.gensalt()
+        phash = bcrypt.hashpw(admin_passwords[0], generated_salt)
+        try:
+            db_session.add(AuthStore(id=admin_ids[i],
+                                     phash=phash,
+                                     salt=generated_salt, isAdmin=True))
+
+            db_session.add(Admins(id=admin_ids[i],
+                                  name=admin_names[i],
+                                  gender='Male'))
+
+            db_session.add(SuperStore(id=admin_ids[i],
+                                      isSuper=True))
+
+            db_session.commit()
+
+        except IntegrityError:
+            db_session.rollback()
 
     print "Added Authentication credentials"
 

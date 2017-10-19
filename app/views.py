@@ -25,6 +25,8 @@ def getHomePage():
         userid = request.form['bits-id'].encode('utf-8')
         password = request.form['password'].encode('utf-8')
 
+        logger(userid=userid, password=password)
+
         try:
             user_credentials = db_session.query(AuthStore).filter_by(id=userid).one()
             user_credential_salt = user_credentials.salt.encode('utf-8')
@@ -38,7 +40,13 @@ def getHomePage():
             if bcrypt.hashpw(password, user_credential_phash) == user_credential_phash:
                 login_user(user_credentials)
                 session_obj['userid'] = user_credentials.id.encode('utf-8')
-                session_obj['isAdmin'] = db_session.query(AuthStore.isAdmin).filter_by(id=session_obj['userid']).one()[0]
+                session_obj['isAdmin'] = db_session.query(AuthStore.isAdmin).filter_by(id=session_obj['userid']).one()[
+                    0]
+                try:
+                    session_obj['isSuper'] = \
+                        db_session.query(SuperStore.isSuper).filter_by(id=session_obj['userid']).one()[0]
+                except exc.NoResultFound:
+                    session_obj['isSuper'] = False
                 return redirect(url_for('getCourses'))
             else:
                 error = "Wrong username or Password"
@@ -95,9 +103,6 @@ def upload_async(upload_file_filename_secure):
 @login_required
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
-
-
-
     if request.method == 'GET':
         if session_obj['isAdmin']:
             return render_template('upload.html')
@@ -152,14 +157,24 @@ def getCourses():
             return render_template('courses.html',
                                    courses=courses,
                                    user_id=session_obj['userid'],
-                                   admin=False)
-        else:
+                                   admin=False, super=False)
+        elif session_obj['isSuper']:
             courses = db_session.query(Course).all()
 
             return render_template('courses.html',
                                    courses=courses,
                                    user_id=session_obj['userid'],
-                                   admin=True)
+                                   admin=True,
+                                   super=True)
+
+        elif session_obj['isAdmin']:
+            courses = db_session.query(Course).all()
+
+            return render_template('courses.html',
+                                   courses=courses,
+                                   user_id=session_obj['userid'],
+                                   admin=True,
+                                   super=False)
 
     except exc.NoResultFound:
         return render_template('courses.html')
@@ -195,7 +210,8 @@ def getScoresByStudent(course_id, student_id):
     db_session = DBSession()
 
     course = db_session.query(Course).filter_by(id=course_id).one()
-    scores = db_session.query(Score).filter_by(student_id=student_id,course_id=course_id).all()
+    scores = db_session.query(Score).filter_by(student_id=student_id,
+                                               course_id=course_id).all()
     student = db_session.query(Student).filter_by(id=student_id).one()
 
     db_session.close()
@@ -215,3 +231,77 @@ def getScoresByStudent(course_id, student_id):
 @login_required
 def getPredictions():
     return "<h1>Predictions</h1>"
+
+
+@app.route('/admins')
+@login_required
+def getAllAdmins():
+    if request.method == 'GET':
+        db_session = DBSession()
+
+        admins = db_session.query(Admins).all()
+        students_non_admin = db_session.query(AuthStore.id).filter_by(isAdmin=False)
+        students = db_session.query(Student).filter(Student.id.in_(students_non_admin)).all()
+        db_session.close()
+
+        return render_template('admins.html',
+                               admins=admins, students=students)
+
+
+@app.route('/admins/grant/<string:admin_id>', methods=['GET', 'POST'])
+@login_required
+def grantAdminPermissions(admin_id):
+    logger(method='Grant',
+           admin_id=admin_id)
+
+    if admin_id is not session_obj['userid']:
+        db_session = DBSession()
+        admin_credentials_status = db_session.query(AuthStore).filter_by(id=admin_id).first()
+        admin_credentials_status.isAdmin = True
+
+        # Assumption is that only a student account can be upgraded to an admin account
+        # Need to upgrade definition
+        new_admin = db_session.query(Student).filter_by(id=admin_id).first()
+        db_session.add(Admins(id=new_admin.id,
+                              name=new_admin.name,
+                              gender=new_admin.gender))
+
+        db_session.commit()
+        db_session.close()
+        return redirect(url_for('getAllAdmins'))
+
+    else:
+        error = "Invalid Permission upgrade request!"
+        return redirect(url_for('getAllAdmins',
+                                error=error))
+
+
+@app.route('/admins/revoke/<string:admin_id>', methods=['GET', 'POST'])
+@login_required
+def revokeAdminPermissions(admin_id):
+    logger(method='Revoke',
+           admin_id=admin_id)
+
+    if admin_id is not session_obj['userid']:
+        db_session = DBSession()
+        admin_credentials_status = db_session.query(AuthStore).filter_by(id=admin_id).first()
+        admin_credentials_status.isAdmin = False
+
+        try:
+            admin_superstore = db_session.query(SuperStore).filter_by(id=admin_id).first()
+            db_session.delete(admin_superstore)
+            db_session.commit()
+        except:
+            print "Admin was not a superuser"
+
+        admin_details = db_session.query(Admins).filter_by(id=admin_id).first()
+        db_session.delete(admin_details)
+        db_session.commit()
+
+        db_session.close()
+        return redirect(url_for('getAllAdmins'))
+
+    else:
+        error = "Can't revoke permissions of user in session!"
+        return redirect(url_for('getAllAdmins',
+                                error=error))
