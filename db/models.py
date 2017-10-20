@@ -5,8 +5,6 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 '''Table Information along with Mappers'''
-
-
 class Student(Base):
     __tablename__ = 'students'
 
@@ -43,8 +41,6 @@ class Course(Base):
 
 
 """NOTE: Need to update the overriden functions of is_authenticated() is_active() and is_anonymous()"""
-
-
 class AuthStore(Base):
     __tablename__ = 'authstore'
 
@@ -66,16 +62,18 @@ class AuthStore(Base):
         return self.id.encode('utf-8')
 
 
-class SuperStore(Base):
-    __tablename__ = 'superstore'
-
-    id = Column(String(10), primary_key=True)
-    isSuper = Column(Boolean())
-
-
-class Admins(Base):
+class Admin(Base):
     __tablename__ = 'admins'
 
     id = Column(String(10), primary_key=True)
     name = Column(String(80), nullable=False)
     gender = Column(String(20))
+    isSuper = Column(Boolean())
+
+
+class Faculty(Base):
+    __tablename__ = 'faculty'
+
+    id = Column(String(30), primary_key=True)
+    name = Column(String(80), nullable=False)
+    gender = Column(String(10))

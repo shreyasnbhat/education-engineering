@@ -93,9 +93,22 @@ def generate_sample_db(path, course_id, course_name, db_session):
             db_session.rollback()
 
     # Add admin login credentials
-    admin_ids = ['admin']
-    admin_names = ['Shreyas']
+    admin_ids = ['admin', 'pkd', 'abaskar', 'bmd']
+    admin_names = ['Shreyas', 'Dr Prasant Kumar Das', 'A Baskar', 'Bharat Deshpande']
     admin_passwords = ['admin']
+
+    for i in range(len(admin_ids)):
+        name = admin_names[i]
+        id = admin_ids[i]
+        try:
+            db_session.add(Faculty(id=id,
+                                   name=name,
+                                   gender='Male'))
+            db_session.commit()
+        except IntegrityError:
+            db_session.rollback()
+
+    print "Added Faculty Details!"
 
     for i in range(len(admin_ids)):
         generated_salt = bcrypt.gensalt()
@@ -105,12 +118,14 @@ def generate_sample_db(path, course_id, course_name, db_session):
                                      phash=phash,
                                      salt=generated_salt, isAdmin=True))
 
-            db_session.add(Admins(id=admin_ids[i],
-                                  name=admin_names[i],
-                                  gender='Male'))
-
-            db_session.add(SuperStore(id=admin_ids[i],
-                                      isSuper=True))
+            if i is 0 or i is 1:
+                db_session.add(Admin(id=admin_ids[i],
+                                     name=admin_names[i],
+                                     gender='Male', isSuper=True))
+            else:
+                db_session.add(Admin(id=admin_ids[i],
+                                     name=admin_names[i],
+                                     gender='Male', isSuper=False))
 
             db_session.commit()
 

@@ -39,6 +39,21 @@
         </li>
         {% endfor %}
         {% endif %}
+        {% if faculty %}
+        <li class="collection-header blue-grey lighten-3"><h5>Faculty(Non Admins)</h5></li>
+        {% for staff in faculty %}
+        <li class="collection-item">
+            <div class="row">
+                <p class="col s1"><strong>{{staff.id}}</strong></p>
+                <p class="col s2">{{staff.name}}</p>
+                <p class="col s1">{{staff.gender}}</p>
+                <p class="col s7"></p>
+                <a class="waves-effect waves-light btn-large col s1"
+                   href="{{url_for('grantAdminPermissions',admin_id=staff.id)}}">Grant</a>
+            </div>
+        </li>
+        {% endfor %}
+        {% endif %}
         {% if students %}
         <li class="collection-header blue-grey lighten-3"><h5>Students</h5></li>
         {% for student in students %}

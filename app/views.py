@@ -39,14 +39,17 @@ def getHomePage():
 
             if bcrypt.hashpw(password, user_credential_phash) == user_credential_phash:
                 login_user(user_credentials)
+
                 session_obj['userid'] = user_credentials.id.encode('utf-8')
                 session_obj['isAdmin'] = db_session.query(AuthStore.isAdmin).filter_by(id=session_obj['userid']).one()[
                     0]
+
                 try:
-                    session_obj['isSuper'] = \
-                        db_session.query(SuperStore.isSuper).filter_by(id=session_obj['userid']).one()[0]
+                    session_obj['isSuper'] = db_session.query(Admin.isSuper).filter_by(id=session_obj['userid']).one()[
+                        0]
                 except exc.NoResultFound:
                     session_obj['isSuper'] = False
+
                 return redirect(url_for('getCourses'))
             else:
                 error = "Wrong username or Password"
@@ -146,8 +149,6 @@ def getCourses():
     db_session = DBSession()
 
     try:
-        logger(User_id=session_obj['userid'])
-
         # If session is not created by an admin user then load student courses else load all courses
         if not session_obj['isAdmin']:
 
@@ -201,7 +202,6 @@ def getStudentsByCourse(course_id):
     else:
         # If not a admin raise a 404 Not Found
         abort(404)
-        return redirect(url_for('getCourses'))
 
 
 @app.route('/courses/<string:course_id>/<string:student_id>')
@@ -237,15 +237,21 @@ def getPredictions():
 @login_required
 def getAllAdmins():
     if request.method == 'GET':
-        db_session = DBSession()
+        if session_obj['isSuper']:
+            db_session = DBSession()
 
-        admins = db_session.query(Admins).all()
-        students_non_admin = db_session.query(AuthStore.id).filter_by(isAdmin=False)
-        students = db_session.query(Student).filter(Student.id.in_(students_non_admin)).all()
-        db_session.close()
+            admins = db_session.query(Admin).all()
+            users_non_admin = db_session.query(AuthStore.id).filter_by(isAdmin=False)
+            students_non_admin = db_session.query(Student).filter(Student.id.in_(users_non_admin)).all()
+            faculty_non_admin = db_session.query(Faculty).filter(Faculty.id.in_(users_non_admin)).all()
+            db_session.close()
 
-        return render_template('admins.html',
-                               admins=admins, students=students)
+            return render_template('admins.html',
+                                   admins=admins,
+                                   students=students_non_admin,
+                                   faculty=faculty_non_admin)
+        else:
+            abort(404)
 
 
 @app.route('/admins/grant/<string:admin_id>', methods=['GET', 'POST'])
@@ -259,14 +265,30 @@ def grantAdminPermissions(admin_id):
         admin_credentials_status = db_session.query(AuthStore).filter_by(id=admin_id).first()
         admin_credentials_status.isAdmin = True
 
-        # Assumption is that only a student account can be upgraded to an admin account
-        # Need to upgrade definition
-        new_admin = db_session.query(Student).filter_by(id=admin_id).first()
-        db_session.add(Admins(id=new_admin.id,
-                              name=new_admin.name,
-                              gender=new_admin.gender))
+        new_admin = None
+        is_student = False
 
-        db_session.commit()
+        try:
+            new_admin = db_session.query(Student).filter_by(id=admin_id).one()
+            is_student = True
+            print "Success!"
+        except exc.NoResultFound:
+            print "Doesn't belong to Student table!"
+
+        if not is_student:
+            try:
+                new_admin = db_session.query(Faculty).filter_by(id=admin_id).one()
+                print "Success"
+            except exc.NoResultFound:
+                print "Doesn't belong to Faculty table!"
+
+        if new_admin:
+            db_session.add(Admin(id=new_admin.id,
+                                 name=new_admin.name,
+                                 gender=new_admin.gender,
+                                 isSuper=False))
+            db_session.commit()
+
         db_session.close()
         return redirect(url_for('getAllAdmins'))
 
@@ -284,19 +306,22 @@ def revokeAdminPermissions(admin_id):
 
     if admin_id is not session_obj['userid']:
         db_session = DBSession()
-        admin_credentials_status = db_session.query(AuthStore).filter_by(id=admin_id).first()
-        admin_credentials_status.isAdmin = False
 
-        try:
-            admin_superstore = db_session.query(SuperStore).filter_by(id=admin_id).first()
-            db_session.delete(admin_superstore)
+        admin_credentials_status = db_session.query(AuthStore).filter_by(id=admin_id).one()
+        admin_details = db_session.query(Admin).filter_by(id=admin_id).one()
+
+        if admin_details.isSuper is False:
+            admin_credentials_status.isAdmin = False
+
+            # Remove Admin from system only if not a superuser
+            db_session.delete(admin_details)
             db_session.commit()
-        except:
-            print "Admin was not a superuser"
 
-        admin_details = db_session.query(Admins).filter_by(id=admin_id).first()
-        db_session.delete(admin_details)
-        db_session.commit()
+        else:
+            error = "Removal of Superuser is disallowed!"
+            db_session.close()
+            return redirect(url_for('getAllAdmins',
+                                    error=error))
 
         db_session.close()
         return redirect(url_for('getAllAdmins'))
