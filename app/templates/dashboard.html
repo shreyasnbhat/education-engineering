@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Subjects</title>
+
+    <link href="{{url_for('static', filename='css/materialize.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+<nav>
+    <div class="nav-wrapper orange accent-3">
+        <a href="{{url_for('getCourses',admin=admin)}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li class="large-font"><a href="{{url_for('logout')}}">Logout</a></li>
+        </ul>
+    </div>
+</nav>
+<div>
+    <div class="card hoverable block-style blue-grey darken-4 ">
+        <div class="card-content white-text">
+            <span class="card-title">User Details</span>
+            <div class="row"></div>
+            <div class="row">
+                <p class="col s1"><strong>User ID</strong></p>
+                <p class="col s2">{{user.id}}</p>
+            </div>
+            <div class="row">
+                <p class="col s1"><strong>User Name</strong></p>
+                <p class="col s2">{{user.name}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="card hoverable block-style blue-grey darken-5">
+        <div class="card-content white-text">
+            <span class="card-title">Change Password</span>
+            <form action="{{url_for('getDashboard')}}" method="POST">
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input name="password" placeholder="New Password" class="validate">
+                    </div>
+                </div>
+                <div class="row">
+                    <button name="action" class="btn waves-effect waves-light blue-grey darken-4">Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

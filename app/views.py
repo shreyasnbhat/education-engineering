@@ -330,3 +330,29 @@ def revokeAdminPermissions(admin_id):
         error = "Can't revoke permissions of user in session!"
         return redirect(url_for('getAllAdmins',
                                 error=error))
+
+
+@login_required
+@app.route('/dashboard', methods=['GET', 'POST'])
+def getDashboard():
+    if request.method == 'GET':
+        db_session = DBSession()
+        user = db_session.query(Student).filter_by(id=session_obj['userid']).one()
+        db_session.close()
+        return render_template('dashboard.html',
+                               user=user)
+
+    else:
+        # Process new password and change user password
+        new_password = request.form['password'].encode('utf-8')
+
+        db_session = DBSession()
+        user_salt_new = bcrypt.gensalt()
+        user_phash_new = bcrypt.hashpw(new_password, user_salt_new)
+        user_credentials = db_session.query(AuthStore).filter_by(id=session_obj['userid']).one()
+        user_credentials.salt = user_salt_new
+        user_credentials.phash = user_phash_new
+        db_session.commit()
+        db_session.close()
+
+        return redirect(url_for('getDashboard'))
