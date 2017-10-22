@@ -11,6 +11,7 @@ class Student(Base):
     name = Column(String(80), nullable=False)
     id = Column(String(20), primary_key=True)
     gender = Column(String(20))
+    email = Column(String(40))
     scores = relationship('Score')
 
 
@@ -77,3 +78,4 @@ class Faculty(Base):
     id = Column(String(30), primary_key=True)
     name = Column(String(80), nullable=False)
     gender = Column(String(10))
+    email = Column(String(40))

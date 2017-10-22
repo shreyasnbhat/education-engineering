@@ -3,12 +3,8 @@ from flask.globals import session as session_obj
 from flask.ext.login import login_user, login_required, logout_user
 from sqlalchemy.orm import exc
 from sqlalchemy import and_
-import json
-import os
-import time
-import smtplib
+import json, os, time, smtplib, bcrypt
 from app import *
-import bcrypt
 from random import choice
 from string import ascii_uppercase
 from logger import logger
@@ -25,6 +21,7 @@ def getHomePage():
 
         db_session = DBSession()
 
+        # Get form data
         userid = request.form['bits-id'].encode('utf-8')
         password = request.form['password'].encode('utf-8')
 
@@ -44,18 +41,35 @@ def getHomePage():
                 login_user(user_credentials)
 
                 session_obj['userid'] = user_credentials.id.encode('utf-8')
-                session_obj['isAdmin'] = db_session.query(AuthStore.isAdmin).filter_by(id=session_obj['userid']).one()[
-                    0]
+                session_obj['isAdmin'] = db_session.query(AuthStore.isAdmin).filter_by(id=session_obj['userid']).one()[0]
 
                 try:
-                    session_obj['isSuper'] = db_session.query(Admin.isSuper).filter_by(id=session_obj['userid']).one()[
-                        0]
+                    session_obj['isSuper'] = db_session.query(Admin.isSuper).filter_by(id=session_obj['userid']).one()[0]
                 except exc.NoResultFound:
                     session_obj['isSuper'] = False
 
+                # Check is user is faculty or student
+                isStudent = False
+                isFaculty = False
+
+                try:
+                    db_session.query(Student).filter_by(id=session_obj['userid']).one()
+                    isStudent = True
+                except exc.NoResultFound:
+                    pass
+
+                try:
+                    db_session.query(Faculty).filter_by(id=session_obj['userid']).one()
+                    isFaculty = True
+                except exc.NoResultFound:
+                    pass
+
+                session_obj['isStudent'] = isStudent
+                session_obj['isFaculty'] = isFaculty
+
                 return redirect(url_for('getCourses'))
             else:
-                error = "Wrong username or Password"
+                error = "Wrong username or Password!"
                 return render_template('homepage.html', error=error)
 
         except exc.NoResultFound:
@@ -296,9 +310,8 @@ def grantAdminPermissions(admin_id):
         return redirect(url_for('getAllAdmins'))
 
     else:
-        error = "Invalid Permission upgrade request!"
-        return redirect(url_for('getAllAdmins',
-                                error=error))
+        flash("Invalid Permission upgrade request!")
+        return redirect(url_for('getAllAdmins'))
 
 
 @app.route('/admins/revoke/<string:admin_id>', methods=['GET', 'POST'])
@@ -321,18 +334,16 @@ def revokeAdminPermissions(admin_id):
             db_session.commit()
 
         else:
-            error = "Removal of Superuser is disallowed!"
+            flash("Removal of Superuser is disallowed!")
             db_session.close()
-            return redirect(url_for('getAllAdmins',
-                                    error=error))
+            return redirect(url_for('getAllAdmins'))
 
         db_session.close()
         return redirect(url_for('getAllAdmins'))
 
     else:
-        error = "Can't revoke permissions of user in session!"
-        return redirect(url_for('getAllAdmins',
-                                error=error))
+        flash("Can't revoke permissions of user in session!")
+        return redirect(url_for('getAllAdmins'))
 
 
 @login_required
@@ -340,10 +351,21 @@ def revokeAdminPermissions(admin_id):
 def getDashboard():
     if request.method == 'GET':
         db_session = DBSession()
-        user = db_session.query(Student).filter_by(id=session_obj['userid']).one()
+
+        user = None
+
+        if session_obj['isStudent']:
+            user = db_session.query(Student).filter_by(id=session_obj['userid']).one()
+        elif session_obj['isFaculty']:
+            user = db_session.query(Faculty).filter_by(id=session_obj['userid']).one()
+
         db_session.close()
-        return render_template('dashboard.html',
-                               user=user)
+
+        if user:
+            return render_template('dashboard.html',
+                                   user=user)
+        else:
+            abort(404)
 
     else:
         # Process new password and change user password
@@ -368,7 +390,6 @@ def forgotPassword():
     if request.method == 'GET':
         return render_template('forgotpassword.html')
     elif request.method == 'POST':
-        user_email = request.form['usermail'].encode('utf-8')
         user_id = request.form['user-id'].encode('utf-8')
 
         # Password Generation and Update
@@ -380,15 +401,54 @@ def forgotPassword():
         user_phash_new = bcrypt.hashpw(new_password, user_salt_new)
         user_credentials.phash = user_phash_new
         user_credentials.salt = user_salt_new
+
+        user_email = ""
+        if session_obj['isStudent']:
+            user = db_session.query(Student).filter_by(id=user_id).one()
+            user_email = user.email
+        elif session_obj['isFaculty']:
+            user = db_session.query(Faculty).filter_by(id=user_id).one()
+            user_email = user.email
+
         db_session.commit()
         db_session.close()
 
-        forgotpassword.delay(user_email, user_id, new_password)
+        # Send Mail Task to Celery
+        if user_email and '@' in user_email:
+            sendmail.delay(user_email, user_id, new_password)
+        else:
+            flash('Default Recovery Email not set!')
+            return redirect(url_for('forgotPassword'))
+
         return redirect(url_for('forgotPassword'))
 
 
+@login_required
+@app.route('/dashboard/recoverymail', methods=['GET', 'POST'])
+def passwordRecoveryMail():
+    if request.method == 'POST':
+
+        db_session = DBSession()
+
+        password_recovery_mail = request.form['email'].encode('utf-8')
+        logger(password_recovery_mail=password_recovery_mail)
+
+        if session_obj['isStudent'] and '@' in password_recovery_mail:
+            user = db_session.query(Student).filter_by(id=session_obj['userid']).one()
+            user.email = password_recovery_mail
+            db_session.commit()
+        elif session_obj['isFaculty'] and '@' in password_recovery_mail:
+            user = db_session.query(Faculty).filter_by(id=session_obj['userid']).one()
+            user.email = password_recovery_mail
+            db_session.commit()
+
+        db_session.close()
+
+    return redirect(url_for('getDashboard'))
+
+
 @celery.task
-def forgotpassword(user_mail, user_id, new_password):
+def sendmail(user_mail, user_id, new_password):
     # Set as environment variables
     gmail_user = 'educationengineering17@gmail.com'
     gmail_password = 'dop1718shreyas'
@@ -397,7 +457,7 @@ def forgotpassword(user_mail, user_id, new_password):
     sent_from = gmail_user
     to = user_mail
     subject = 'Forgot Password for Grade Predictor and Analyzer'
-    body = 'Your new password is ' + new_password + '\n - Admin'
+    body = 'Your new password for ' + user_id + 'is ' + new_password + '\n - Admin'
     email_text = """Subject: %s\n%s\n""" % (subject, body)
 
     logger(message=email_text)

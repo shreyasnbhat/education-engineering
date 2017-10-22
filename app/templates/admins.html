@@ -22,9 +22,19 @@
     </div>
 </nav>
 <div class="block-style">
-    {% if error %}
-    <p class="error">{{error}}</p>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="card hoverable block-style red lighten-1">
+        <div class="white-text center">
+            <ul class=flashes>
+                {% for message in messages %}
+                <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
     {% endif %}
+    {% endwith %}
     <ul class="collection with-header">
         {% if admins %}
         <li class="collection-header blue-grey lighten-3"><h5>Admins</h5></li>

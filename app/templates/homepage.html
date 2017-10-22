@@ -22,7 +22,7 @@
     </div>
 </nav>
 <div class="row block-style">
-    <form class="col s4 offset-s4 card-panel white" action="{{url_for('getHomePage')}}" method="POST">
+    <form class="col s4 offset-s4 card-panel white hoverable" action="{{url_for('getHomePage')}}" method="POST">
         <div class="row">
             <h4 class="center">Login</h4>
             <hr>
@@ -43,7 +43,8 @@
             <button name="action" class="btn waves-effect waves-light orange darken-4">Submit</button>
         </div>
         <div class="row center">
-            <a class="waves-effect waves-light btn" href="{{url_for('forgotPassword')}}">Forgot Password</a>
+            <a class="waves-effect waves-light btn orange darken-5" href="{{url_for('forgotPassword')}}">Forgot
+                Password</a>
         </div>
         {% if error %}
         <div class="row center">

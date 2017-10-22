@@ -35,6 +35,22 @@
             </div>
         </div>
     </div>
+    <div class="card hoverable block-style blue-grey darken-2">
+        <div class="card-content white-text">
+            <span class="card-title">Change Password Recovery Mail</span>
+            <form action="{{url_for('passwordRecoveryMail')}}" method="POST">
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input name="email" placeholder="{{user.email}}" type="email" class="validate">
+                    </div>
+                </div>
+                <div class="row">
+                    <button name="action" class="btn waves-effect waves-light blue-grey darken-4">Confirm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <div class="card hoverable block-style blue-grey darken-5">
         <div class="card-content white-text">
             <span class="card-title">Change Password</span>
@@ -51,7 +67,6 @@
             </form>
         </div>
     </div>
-
     {% with messages = get_flashed_messages() %}
     {% if messages %}
     <div class="card hoverable block-style black">
