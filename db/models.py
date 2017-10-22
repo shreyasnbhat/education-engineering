@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, ForeignKeyConstraint, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -11,6 +11,7 @@ class Student(Base):
     name = Column(String(80), nullable=False)
     id = Column(String(20), primary_key=True)
     gender = Column(String(20))
+    email = Column(String(40))
     scores = relationship('Score')
 
 
@@ -24,12 +25,13 @@ class Score(Base):
 
 
 class MaxScore(Base):
-    __tablename__ =  'maxscores'
+    __tablename__ = 'maxscores'
 
     course_id = Column(String(10), primary_key=True)
     name = Column(String(20), primary_key=True)
     maxscore = Column(Integer)
-    ForeignKeyConstraint(['course_id','name'],['scores.course_id','scores.name'])
+    ForeignKeyConstraint(['course_id', 'name'], ['scores.course_id', 'scores.name'])
+
 
 class Course(Base):
     __tablename__ = 'courses'
@@ -46,6 +48,7 @@ class AuthStore(Base):
     id = Column(String(10), primary_key=True)
     salt = Column(String(50))
     phash = Column(String(50))
+    isAdmin = Column(Boolean())
 
     def is_authenticated(self):
         return True
@@ -60,9 +63,19 @@ class AuthStore(Base):
         return self.id.encode('utf-8')
 
 
+class Admin(Base):
+    __tablename__ = 'admins'
+
+    id = Column(String(10), primary_key=True)
+    name = Column(String(80), nullable=False)
+    gender = Column(String(20))
+    isSuper = Column(Boolean())
 
 
+class Faculty(Base):
+    __tablename__ = 'faculty'
 
-
-
-
+    id = Column(String(30), primary_key=True)
+    name = Column(String(80), nullable=False)
+    gender = Column(String(10))
+    email = Column(String(40))

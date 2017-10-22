@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Users</title>
+
+    <link href="{{url_for('static', filename='css/materialize.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+</head>
+<body>
+<nav>
+    <div class="nav-wrapper orange accent-3">
+        <a href="{{url_for('getCourses')}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li class="large-font active"><a href="{{url_for('getAllAdmins')}}">Admins</a></li>
+            <li class="large-font"><a href="{{url_for('getCourses')}}">Courses</a></li>
+            <li class="large-font"><a href="{{url_for('getDashboard')}}">Dashboard</a></li>
+            <li class="large-font"><a href="{{url_for('logout')}}">Logout</a></li>
+        </ul>
+    </div>
+</nav>
+<div class="block-style">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="card hoverable block-style red lighten-1">
+        <div class="white-text center">
+            <ul class=flashes>
+                {% for message in messages %}
+                <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+    <ul class="collection with-header">
+        {% if admins %}
+        <li class="collection-header blue-grey lighten-3"><h5>Admins</h5></li>
+        {% for admin in admins %}
+        <li class="collection-item">
+            <div class="row">
+                <p class="col s1"><strong>{{admin.id}}</strong></p>
+                <p class="col s2">{{admin.name}}</p>
+                <p class="col s1">{{admin.gender}}</p>
+                <p class="col s7"></p>
+                <a class="waves-effect waves-light btn-large col s1"
+                   href="{{url_for('revokeAdminPermissions',admin_id=admin.id)}}">Revoke</a>
+            </div>
+        </li>
+        {% endfor %}
+        {% endif %}
+        {% if faculty %}
+        <li class="collection-header blue-grey lighten-3"><h5>Faculty(Non Admins)</h5></li>
+        {% for staff in faculty %}
+        <li class="collection-item">
+            <div class="row">
+                <p class="col s1"><strong>{{staff.id}}</strong></p>
+                <p class="col s2">{{staff.name}}</p>
+                <p class="col s1">{{staff.gender}}</p>
+                <p class="col s7"></p>
+                <a class="waves-effect waves-light btn-large col s1"
+                   href="{{url_for('grantAdminPermissions',admin_id=staff.id)}}">Grant</a>
+            </div>
+        </li>
+        {% endfor %}
+        {% endif %}
+        {% if students %}
+        <li class="collection-header blue-grey lighten-3"><h5>Students</h5></li>
+        {% for student in students %}
+        <li class="collection-item">
+            <div class="row">
+                <p class="col s1"><strong>{{student.id}}</strong></p>
+                <p class="col s2">{{student.name}}</p>
+                <p class="col s1">{{student.gender}}</p>
+                <p class="col s7"></p>
+                <a class="waves-effect waves-light btn-large col s1"
+                   href="{{url_for('grantAdminPermissions',admin_id=student.id)}}">Grant</a>
+            </div>
+        </li>
+        {% endfor %}
+        {% endif %}
+    </ul>
+</div>
+</body>
+</html>
