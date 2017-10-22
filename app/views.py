@@ -355,4 +355,6 @@ def getDashboard():
         db_session.commit()
         db_session.close()
 
+        flash("Password Successfully Changed!")
+
         return redirect(url_for('getDashboard'))
