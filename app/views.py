@@ -6,8 +6,11 @@ from sqlalchemy import and_
 import json
 import os
 import time
+import smtplib
 from app import *
 import bcrypt
+from random import choice
+from string import ascii_uppercase
 from logger import logger
 from db.samplev2 import generate_sample_db
 from werkzeug.utils import secure_filename
@@ -358,3 +361,56 @@ def getDashboard():
         flash("Password Successfully Changed!")
 
         return redirect(url_for('getDashboard'))
+
+
+@app.route('/forgotpassword', methods=['GET', 'POST'])
+def forgotPassword():
+    if request.method == 'GET':
+        return render_template('forgotpassword.html')
+    elif request.method == 'POST':
+        user_email = request.form['usermail'].encode('utf-8')
+        user_id = request.form['user-id'].encode('utf-8')
+
+        # Password Generation and Update
+        db_session = DBSession()
+        user_credentials = db_session.query(AuthStore).filter_by(id=user_id).one()
+        new_password = ''.join([choice(ascii_uppercase) for i in range(16)])
+        logger(new_password=new_password)
+        user_salt_new = bcrypt.gensalt()
+        user_phash_new = bcrypt.hashpw(new_password, user_salt_new)
+        user_credentials.phash = user_phash_new
+        user_credentials.salt = user_salt_new
+        db_session.commit()
+        db_session.close()
+
+        forgotpassword.delay(user_email, user_id, new_password)
+        return redirect(url_for('forgotPassword'))
+
+
+@celery.task
+def forgotpassword(user_mail, user_id, new_password):
+    # Set as environment variables
+    gmail_user = 'educationengineering17@gmail.com'
+    gmail_password = 'dop1718shreyas'
+
+    # Mail Send
+    sent_from = gmail_user
+    to = user_mail
+    subject = 'Forgot Password for Grade Predictor and Analyzer'
+    body = 'Your new password is ' + new_password + '\n - Admin'
+    email_text = """Subject: %s\n%s\n""" % (subject, body)
+
+    logger(message=email_text)
+
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.ehlo()
+        server.starttls()
+        server.login(gmail_user, gmail_password)
+        server.sendmail(sent_from, to, email_text)
+        server.close()
+
+        logger(email="Email Sent Succesfully!")
+
+    except:
+        logger(email="Something went wrong!")

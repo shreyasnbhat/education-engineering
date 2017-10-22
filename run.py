@@ -13,7 +13,8 @@ if __name__ == '__main__':
         app.run(host='localhost', port=port)
 
     elif deploy_mode == 'production':
-        app.run(host='0.0.0.0', port=port)
+        # Needs pyopenssl package
+        app.run(host='0.0.0.0', port=port, ssl_context='adhoc')
 
-    else :
+    else:
         print "Usage: python run.py <debug/production>"
