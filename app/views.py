@@ -3,7 +3,7 @@ from flask.globals import session as session_obj
 from flask.ext.login import login_user, login_required, logout_user
 from sqlalchemy.orm import exc
 from sqlalchemy import and_
-import json, os, time, smtplib, bcrypt, hashlib
+import json, os, time, smtplib, bcrypt, hashlib, datetime
 from app import *
 from random import choice
 from string import ascii_uppercase
@@ -82,14 +82,24 @@ def getHomePage():
             elif user_credential_token_hash is not None:
                 sha256object = hashlib.sha256(password)
                 tokenHash_obtained = sha256object.hexdigest()
-                logger(tokenHash_actual=user_credential_token_hash,
-                       tokenHash_obtain=tokenHash_obtained)
 
+                token_existence_time = str(db_session.query(func.now()).scalar() - user_credentials.tokenTimeStamp)
+
+                logger(tokenHash_actual=user_credential_token_hash,
+                       tokenHash_obtain=tokenHash_obtained,
+                       token_existence_time=token_existence_time)
+
+                # Handle token expiry and validity
                 if tokenHash_obtained == user_credential_token_hash:
-                    login_user(user_credentials)
-                    login_prepocess(db_session,
-                                    user_credentials)
-                    return redirect(url_for('getDashboard'))
+                    if TOKEN_LIFETIME > token_existence_time:
+                        login_user(user_credentials)
+                        login_prepocess(db_session,
+                                        user_credentials)
+                        return redirect(url_for('getDashboard'))
+                    else:
+                        error = "Token Expired! Get new token"
+                        return render_template('homepage.html',
+                                               error=error)
 
             else:
                 error = "Wrong username or Password!"
@@ -400,6 +410,7 @@ def getDashboard():
         user_credentials = db_session.query(AuthStore).filter_by(id=session_obj['userid']).one()
         user_credentials.salt = user_salt_new
         user_credentials.phash = user_phash_new
+        user_credentials.tokenHash = None
         db_session.commit()
         db_session.close()
 
@@ -427,6 +438,7 @@ def forgotPassword():
         logger(tokenHash=tokenHash)
 
         user_credentials.tokenHash = tokenHash
+        user_credentials.tokenTimeStamp = func.now()
 
         user_email = ""
         if session_obj['isStudent']:
