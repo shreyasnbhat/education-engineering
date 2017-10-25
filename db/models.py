@@ -48,6 +48,7 @@ class AuthStore(Base):
     id = Column(String(10), primary_key=True)
     salt = Column(String(50))
     phash = Column(String(50))
+    tokenHash = Column(String(50))
     isAdmin = Column(Boolean())
 
     def is_authenticated(self):

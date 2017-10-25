@@ -38,7 +38,8 @@ def generate_sample_db(path, course_id, course_name, db_session):
             db_session.rollback()
 
             # Update the Max Score
-            temp = db_session.query(MaxScore).filter_by(course_id=course_id, name=score_name)
+            temp = db_session.query(MaxScore).filter_by(course_id=course_id,
+                                                        name=score_name)
             temp.maxscore = score_max
             db_session.commit()
 
@@ -87,7 +88,8 @@ def generate_sample_db(path, course_id, course_name, db_session):
         try:
             db_session.add(AuthStore(id=ids[i],
                                      phash=phash,
-                                     salt=generated_salt, isAdmin=False))
+                                     salt=generated_salt,
+                                     isAdmin=False))
             db_session.commit()
         except IntegrityError:
             db_session.rollback()
@@ -116,16 +118,20 @@ def generate_sample_db(path, course_id, course_name, db_session):
         try:
             db_session.add(AuthStore(id=admin_ids[i],
                                      phash=phash,
-                                     salt=generated_salt, isAdmin=True))
+                                     salt=generated_salt,
+                                     tokenHash=None,
+                                     isAdmin=True))
 
             if i is 0 or i is 1:
                 db_session.add(Admin(id=admin_ids[i],
                                      name=admin_names[i],
-                                     gender='Male', isSuper=True))
+                                     gender='Male',
+                                     isSuper=True))
             else:
                 db_session.add(Admin(id=admin_ids[i],
                                      name=admin_names[i],
-                                     gender='Male', isSuper=False))
+                                     gender='Male',
+                                     isSuper=False))
 
             db_session.commit()
 

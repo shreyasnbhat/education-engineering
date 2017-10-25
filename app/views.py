@@ -3,7 +3,7 @@ from flask.globals import session as session_obj
 from flask.ext.login import login_user, login_required, logout_user
 from sqlalchemy.orm import exc
 from sqlalchemy import and_
-import json, os, time, smtplib, bcrypt
+import json, os, time, smtplib, bcrypt, hashlib
 from app import *
 from random import choice
 from string import ascii_uppercase
@@ -392,15 +392,18 @@ def forgotPassword():
     elif request.method == 'POST':
         user_id = request.form['user-id'].encode('utf-8')
 
-        # Password Generation and Update
+        ''' Store newly SHA256 hash of the generated token in the column token hash '''
         db_session = DBSession()
+
         user_credentials = db_session.query(AuthStore).filter_by(id=user_id).one()
-        new_password = ''.join([choice(ascii_uppercase) for i in range(16)])
-        logger(new_password=new_password)
-        user_salt_new = bcrypt.gensalt()
-        user_phash_new = bcrypt.hashpw(new_password, user_salt_new)
-        user_credentials.phash = user_phash_new
-        user_credentials.salt = user_salt_new
+        token = ''.join([choice(ascii_uppercase) for i in range(16)])
+        logger(new_password=token)
+
+        sha256object = hashlib.sha256(token)
+        tokenHash = sha256object.hexdigest()
+        logger(tokenHash=tokenHash)
+
+        user_credentials.tokenHash = tokenHash
 
         user_email = ""
         if session_obj['isStudent']:
@@ -415,7 +418,7 @@ def forgotPassword():
 
         # Send Mail Task to Celery
         if user_email and '@' in user_email:
-            sendmail.delay(user_email, user_id, new_password)
+            sendmail.delay(user_email, user_id, token)
         else:
             flash('Default Recovery Email not set!')
             return redirect(url_for('forgotPassword'))
@@ -457,7 +460,7 @@ def sendmail(user_mail, user_id, new_password):
     sent_from = gmail_user
     to = user_mail
     subject = 'Forgot Password for Grade Predictor and Analyzer'
-    body = 'Your new password for ' + user_id + ' is ' + new_password + '\n - Admin'
+    body = 'Your recovery token for account: ' + user_id + ' is ' + new_password + '\n - Admin'
     email_text = """Subject: %s\n%s\n""" % (subject, body)
 
     logger(message=email_text)
