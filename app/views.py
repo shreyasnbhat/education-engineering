@@ -457,7 +457,7 @@ def sendmail(user_mail, user_id, new_password):
     sent_from = gmail_user
     to = user_mail
     subject = 'Forgot Password for Grade Predictor and Analyzer'
-    body = 'Your new password for ' + user_id + 'is ' + new_password + '\n - Admin'
+    body = 'Your new password for ' + user_id + ' is ' + new_password + '\n - Admin'
     email_text = """Subject: %s\n%s\n""" % (subject, body)
 
     logger(message=email_text)
