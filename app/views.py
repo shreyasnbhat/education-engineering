@@ -12,6 +12,41 @@ from db.samplev2 import generate_sample_db
 from werkzeug.utils import secure_filename
 
 
+def login_prepocess(db_session, user_credentials):
+    """
+    This pre processor is used to identify if a user exists in the faculty or the student table
+    :param db_session: Database session for the db
+    :param user_credentials: User credentials of the user logging in
+    """
+
+    session_obj['userid'] = user_credentials.id.encode('utf-8')
+    session_obj['isAdmin'] = db_session.query(AuthStore.isAdmin).filter_by(id=session_obj['userid']).one()[0]
+
+    try:
+        session_obj['isSuper'] = db_session.query(Admin.isSuper).filter_by(id=session_obj['userid']).one()[0]
+    except exc.NoResultFound:
+        session_obj['isSuper'] = False
+
+    # Check is user is faculty or student
+    isStudent = False
+    isFaculty = False
+
+    try:
+        db_session.query(Student).filter_by(id=session_obj['userid']).one()
+        isStudent = True
+    except exc.NoResultFound:
+        pass
+
+    try:
+        db_session.query(Faculty).filter_by(id=session_obj['userid']).one()
+        isFaculty = True
+    except exc.NoResultFound:
+        pass
+
+    session_obj['isStudent'] = isStudent
+    session_obj['isFaculty'] = isFaculty
+
+
 @app.route('/', methods=['GET', 'POST'])
 def getHomePage():
     if request.method == 'GET':
@@ -21,7 +56,7 @@ def getHomePage():
 
         db_session = DBSession()
 
-        # Get form data
+        ''' Password can either be an existing password or a token to be used for password resets '''
         userid = request.form['bits-id'].encode('utf-8')
         password = request.form['password'].encode('utf-8')
 
@@ -31,6 +66,7 @@ def getHomePage():
             user_credentials = db_session.query(AuthStore).filter_by(id=userid).one()
             user_credential_salt = user_credentials.salt.encode('utf-8')
             user_credential_phash = user_credentials.phash.encode('utf-8')
+            user_credential_token_hash = user_credentials.tokenHash
 
             logger(Password=password,
                    Salt=user_credential_salt,
@@ -39,35 +75,22 @@ def getHomePage():
 
             if bcrypt.hashpw(password, user_credential_phash) == user_credential_phash:
                 login_user(user_credentials)
-
-                session_obj['userid'] = user_credentials.id.encode('utf-8')
-                session_obj['isAdmin'] = db_session.query(AuthStore.isAdmin).filter_by(id=session_obj['userid']).one()[0]
-
-                try:
-                    session_obj['isSuper'] = db_session.query(Admin.isSuper).filter_by(id=session_obj['userid']).one()[0]
-                except exc.NoResultFound:
-                    session_obj['isSuper'] = False
-
-                # Check is user is faculty or student
-                isStudent = False
-                isFaculty = False
-
-                try:
-                    db_session.query(Student).filter_by(id=session_obj['userid']).one()
-                    isStudent = True
-                except exc.NoResultFound:
-                    pass
-
-                try:
-                    db_session.query(Faculty).filter_by(id=session_obj['userid']).one()
-                    isFaculty = True
-                except exc.NoResultFound:
-                    pass
-
-                session_obj['isStudent'] = isStudent
-                session_obj['isFaculty'] = isFaculty
-
+                login_prepocess(db_session,
+                                user_credentials)
                 return redirect(url_for('getCourses'))
+
+            elif user_credential_token_hash is not None:
+                sha256object = hashlib.sha256(password)
+                tokenHash_obtained = sha256object.hexdigest()
+                logger(tokenHash_actual=user_credential_token_hash,
+                       tokenHash_obtain=tokenHash_obtained)
+
+                if tokenHash_obtained == user_credential_token_hash:
+                    login_user(user_credentials)
+                    login_prepocess(db_session,
+                                    user_credentials)
+                    return redirect(url_for('getDashboard'))
+
             else:
                 error = "Wrong username or Password!"
                 return render_template('homepage.html', error=error)
@@ -460,7 +483,7 @@ def sendmail(user_mail, user_id, new_password):
     sent_from = gmail_user
     to = user_mail
     subject = 'Forgot Password for Grade Predictor and Analyzer'
-    body = 'Your recovery token for account: ' + user_id + ' is ' + new_password + '\n - Admin'
+    body = 'Your new password for ' + user_id + ' is ' + new_password + '\n - Admin'
     email_text = """Subject: %s\n%s\n""" % (subject, body)
 
     logger(message=email_text)
