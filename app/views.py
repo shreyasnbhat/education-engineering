@@ -1,6 +1,6 @@
-from flask import render_template, request, redirect, url_for, abort, flash
+from flask import render_template, request, redirect, url_for, abort, flash, session, g
 from flask.globals import session as session_obj
-from flask.ext.login import login_user, login_required, logout_user
+from flask.ext.login import login_user, login_required, logout_user, current_user
 from sqlalchemy.orm import exc
 from sqlalchemy import and_
 import json, os, time, smtplib, bcrypt, hashlib, datetime
@@ -10,6 +10,17 @@ from string import ascii_uppercase
 from logger import logger
 from db.samplev2 import generate_sample_db
 from werkzeug.utils import secure_filename
+
+
+@app.before_request
+def make_session_permanent():
+    """
+    Session timeout is defined as 15 minutes and timeout is after inactivity
+    """
+    session.permanent = True
+    app.permanent_session_lifetime = datetime.timedelta(minutes=15)
+    session.modified = True
+    g.user = current_user
 
 
 def login_prepocess(db_session, user_credentials):
