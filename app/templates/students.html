@@ -14,6 +14,7 @@
     <div class="nav-wrapper orange accent-3">
         <a href="{{url_for('getCourses')}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li class="large-font"><a href="{{url_for('getCourseMetrics',course_id=course_id)}}">Metrics</a></li>
             <li class="large-font"><a href="{{url_for('getCourses')}}">Courses</a></li>
             <li class="large-font"><a href="{{url_for('logout')}}">Logout</a></li>
         </ul>

@@ -414,18 +414,20 @@ def getDashboard():
     else:
         # Process new password and change user password
         new_password = request.form['password'].encode('utf-8')
+        if len(new_password) >= 6 :
+            db_session = DBSession()
+            user_salt_new = bcrypt.gensalt()
+            user_phash_new = bcrypt.hashpw(new_password, user_salt_new)
+            user_credentials = db_session.query(AuthStore).filter_by(id=session_obj['userid']).one()
+            user_credentials.salt = user_salt_new
+            user_credentials.phash = user_phash_new
+            user_credentials.tokenHash = None
+            db_session.commit()
+            db_session.close()
 
-        db_session = DBSession()
-        user_salt_new = bcrypt.gensalt()
-        user_phash_new = bcrypt.hashpw(new_password, user_salt_new)
-        user_credentials = db_session.query(AuthStore).filter_by(id=session_obj['userid']).one()
-        user_credentials.salt = user_salt_new
-        user_credentials.phash = user_phash_new
-        user_credentials.tokenHash = None
-        db_session.commit()
-        db_session.close()
-
-        flash("Password Successfully Changed!")
+            flash("Password Successfully Changed!")
+        else:
+            flash("Password must have more than 6 characters")
 
         return redirect(url_for('getDashboard'))
 
@@ -523,3 +525,24 @@ def sendmail(user_mail, user_id, new_password):
 
     except:
         logger(email="Something went wrong!")
+
+
+@login_required
+@app.route('/courses/<string:course_id>/metrics')
+def getCourseMetrics(course_id):
+
+    db_session = DBSession()
+
+    course = db_session.query(Course).filter_by(id=course_id).one()
+    max_score = db_session.query(MaxScore.maxscore).filter_by(course_id=course.id,name='Total').one()[0]
+    scores = db_session.query(Score).filter_by(course_id=course_id,name='Total').all()
+    scores_num = json.dumps([i.score for i in scores])
+    scores_names = json.dumps([i.name for i in scores])
+    print max_score
+
+
+    return render_template('metrics.html',
+                           course_id=course_id,
+                           max_score=max_score,
+                           scores=scores_num,
+                           names=scores_names)

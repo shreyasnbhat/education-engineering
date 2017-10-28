@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Metrics for {{course_id}}</title>
+
+    <link href="{{url_for('static', filename='css/materialize.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+</head>
+<body>
+<nav>
+    <div class="nav-wrapper orange accent-3 no-margin">
+        <a href="{{url_for('getCourses')}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li class="large-font active"><a href="{{url_for('getCourseMetrics',course_id=course_id)}}">Metrics</a></li>
+            <li class="large-font"><a href="{{url_for('getCourses')}}">Courses</a></li>
+            <li class="large-font"><a href="{{url_for('logout')}}">Logout</a></li>
+        </ul>
+    </div>
+</nav>
+<div id="scoreGraph"></div>
+<script>
+    var scores = JSON.parse({{scores | tojson}})
+
+    var data = [
+        {
+            x: scores,
+            type: 'histogram',
+            marker: {
+                color: '#ff9e80',
+            }
+        }
+    ];
+
+    var layout = {
+        height: 600,
+        width: 1500,
+        bargap: 0.05,
+        title: "Mark Distribution",
+        xaxis: {title: "Scores"},
+        yaxis: {title: "Count"},
+        font: {
+            family: 'Courier New, monospace',
+            size: 18,
+            color: '#7f7f7f'
+        }
+    };
+    Plotly.newPlot('scoreGraph', data,layout);
+</script>
+</body>
+</html>
