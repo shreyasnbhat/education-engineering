@@ -14,7 +14,7 @@
 </head>
 <body>
 <nav>
-    <div class="nav-wrapper orange accent-3 no-margin">
+    <div class="nav-wrapper orange darken-3">
         <a href="{{url_for('getCourses')}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
             <li class="large-font active"><a href="{{url_for('getCourseMetrics',course_id=course_id)}}">Metrics</a></li>
@@ -43,7 +43,7 @@
             opacity: opacity,
             name: names[i],
             type: 'histogram',
-            marker: {color: '#dd2c00'}
+            marker: {color: '#01579b'}
         };
         data.push(trace);
     }
@@ -63,11 +63,9 @@
     };
     Plotly.newPlot('scoreGraph', data, layout);
 </script>
-<div class="information small-font center">
+<div class="center small-font">
     <p>Double click on any of the legends squares to generate histogram of only that component</p>
 </div>
-<div class="">
-
 </div>
 </div>
 </body>

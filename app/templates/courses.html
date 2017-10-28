@@ -11,7 +11,7 @@
 </head>
 <body>
 <nav>
-    <div class="nav-wrapper orange accent-3">
+    <div class="nav-wrapper orange darken-3">
         <a href="{{url_for('getCourses',admin=admin)}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
         <ul id="nav-mobile" class="right hide-on-med-and-down">
             {% if super %}
@@ -23,26 +23,6 @@
         </ul>
     </div>
 </nav>
-<div class="block-style">
-    {% if courses %}
-    <ul class="collection">
-        {% for course in courses %}
-        <li class="collection-item">
-            {% if admin %}
-            <a href="{{url_for('getStudentsByCourse',course_id=course.id)}}">
-                {% else %}
-                <a href="{{url_for('getScoresByStudent',course_id=course.id, student_id=user_id)}}">
-                    {% endif %}
-                    <p class="small-font">{{course.name}}</p>
-                    <p> {{course.id}} </p>
-                    {% endfor %}
-                </a>
-        </li>
-    </ul>
-    {% else %}
-    <h3>You have no Subjects currently!</h3>
-    {% endif %}
-</div>
 {% if admin %}
 <div class="block-style">
     <form action="{{url_for('upload')}}">
@@ -50,5 +30,25 @@
     </form>
 </div>
 {% endif %}
+<div class="block-style">
+    {% if courses %}
+    <ul class="collection">
+        {% for course in courses %}
+        <li class="collection-item">
+            {% if admin %}
+            <a href="{{url_for('getStudentsByCourse',course_id=course.id)}}">
+            {% else %}
+            <a href="{{url_for('getScoresByStudent',course_id=course.id, student_id=user_id)}}"></a>
+            {% endif %}
+            <p class="small-font">{{course.name}}</p>
+            <p> {{course.id}} </p>
+            </a>
+        {% endfor %}
+        </li>
+    </ul>
+    {% else %}
+    <h3>You have no Subjects currently!</h3>
+    {% endif %}
+</div>
 </body>
 </html>
