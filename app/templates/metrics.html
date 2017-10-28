@@ -23,34 +23,52 @@
         </ul>
     </div>
 </nav>
+<div class="block-style">
 <div id="scoreGraph"></div>
 <script>
-    var scores = JSON.parse({{scores | tojson}})
+    var scores = {{scores | tojson}}
+    var names = {{names | tojson}}
 
-    var data = [
-        {
-            x: scores,
-            type: 'histogram',
-            marker: {
-                color: '#ff9e80',
-            }
+    var data = [];
+
+    for (var i = 0; i < scores.length; i++) {
+
+        var opacity = 1;
+        if (i > 0) {
+            opacity = (10 - i) / 10;
         }
-    ];
+
+        var trace = {
+            x: scores[i],
+            opacity: opacity,
+            name: names[i],
+            type: 'histogram',
+            marker: {color: '#dd2c00'}
+        };
+        data.push(trace);
+    }
 
     var layout = {
-        height: 600,
-        width: 1500,
         bargap: 0.05,
+        height: 800,
         title: "Mark Distribution",
-        xaxis: {title: "Scores"},
+        xaxis: {title: "Course Percentage"},
         yaxis: {title: "Count"},
+        barmode: "stack",
         font: {
             family: 'Courier New, monospace',
             size: 18,
             color: '#7f7f7f'
         }
     };
-    Plotly.newPlot('scoreGraph', data,layout);
+    Plotly.newPlot('scoreGraph', data, layout);
 </script>
+<div class="information small-font center">
+    <p>Double click on any of the legends squares to generate histogram of only that component</p>
+</div>
+<div class="">
+
+</div>
+</div>
 </body>
 </html>

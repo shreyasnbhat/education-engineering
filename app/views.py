@@ -414,7 +414,7 @@ def getDashboard():
     else:
         # Process new password and change user password
         new_password = request.form['password'].encode('utf-8')
-        if len(new_password) >= 6 :
+        if len(new_password) >= 6:
             db_session = DBSession()
             user_salt_new = bcrypt.gensalt()
             user_phash_new = bcrypt.hashpw(new_password, user_salt_new)
@@ -530,19 +530,26 @@ def sendmail(user_mail, user_id, new_password):
 @login_required
 @app.route('/courses/<string:course_id>/metrics')
 def getCourseMetrics(course_id):
-
     db_session = DBSession()
 
     course = db_session.query(Course).filter_by(id=course_id).one()
-    max_score = db_session.query(MaxScore.maxscore).filter_by(course_id=course.id,name='Total').one()[0]
-    scores = db_session.query(Score).filter_by(course_id=course_id,name='Total').all()
-    scores_num = json.dumps([i.score for i in scores])
-    scores_names = json.dumps([i.name for i in scores])
-    print max_score
+    maxscore_by_subject = db_session.query(MaxScore).filter_by(course_id=course.id).all()
 
+    score_names = [i.name for i in maxscore_by_subject]
+    max_scores = [i.maxscore for i in maxscore_by_subject]
+
+    list_scores_by_test_type = []
+    size_of_score_names = len(score_names)
+
+    for i in range(size_of_score_names):
+        score_query = db_session.query(Score).filter_by(course_id=course_id, name=score_names[i]).all()
+        list_scores_by_test_type.append([(float(j.score) / float(max_scores[i])) * 100 for j in score_query])
+
+    logger(lists = list_scores_by_test_type)
+    db_session.close()
 
     return render_template('metrics.html',
                            course_id=course_id,
-                           max_score=max_score,
-                           scores=scores_num,
-                           names=scores_names)
+                           max_score=max_scores,
+                           scores=list_scores_by_test_type,
+                           names=score_names)
