@@ -62,7 +62,7 @@ def generate_sample_db(path, course_id, course_name, db_session):
         # Add scores of the student
         #If you want the entries to be displayed in order in DB Browser then use this otherwise comment it.
         if(db_session.query(Score).filter_by(student_id = formatted_student_id).first() != None):
-            db_session.query(Score).filter_by(student_id = formatted_student_id, course_id = course_id).delete(synchronize_session = 'fetch')
+            db_session.query(Score).filter_by(student_id = formatted_student_id, course_id = course_id).delete(synchronize_session = 'evaluate')
             db_session.commit()
 
         for mark_column in sample_mark_columns:
