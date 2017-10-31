@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, ForeignKeyConstraint, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, ForeignKeyConstraint, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql import func
 
 Base = declarative_base()
 
@@ -48,6 +49,8 @@ class AuthStore(Base):
     id = Column(String(10), primary_key=True)
     salt = Column(String(50))
     phash = Column(String(50))
+    tokenHash = Column(String(50))
+    tokenTimeStamp = Column(DateTime(timezone=True), server_default=func.now())
     isAdmin = Column(Boolean())
 
     def is_authenticated(self):

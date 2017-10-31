@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Metrics for {{course_id}}</title>
+
+    <link href="{{url_for('static', filename='css/materialize.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='css/home_styles.css')}}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+</head>
+<body>
+<nav>
+    <div class="nav-wrapper orange darken-3">
+        <a href="{{url_for('getCourses')}}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li class="large-font active"><a href="{{url_for('getCourseMetrics',course_id=course_id)}}">Metrics</a></li>
+            <li class="large-font"><a href="{{url_for('getCourses')}}">Courses</a></li>
+            <li class="large-font"><a href="{{url_for('logout')}}">Logout</a></li>
+        </ul>
+    </div>
+</nav>
+<div class="block-style">
+<div id="scoreGraph"></div>
+<script>
+    var scores = {{scores | tojson}}
+    var names = {{names | tojson}}
+
+    var data = [];
+
+    for (var i = 0; i < scores.length; i++) {
+
+        var opacity = 1;
+        if (i > 0) {
+            opacity = (10 - i) / 10;
+        }
+
+        var trace = {
+            x: scores[i],
+            opacity: opacity,
+            name: names[i],
+            type: 'histogram',
+            marker: {color: '#01579b'}
+        };
+        data.push(trace);
+    }
+
+    var layout = {
+        bargap: 0.05,
+        height: 800,
+        title: "Mark Distribution",
+        xaxis: {title: "Course Percentage"},
+        yaxis: {title: "Count"},
+        barmode: "stack",
+        font: {
+            family: 'Courier New, monospace',
+            size: 18,
+            color: '#7f7f7f'
+        }
+    };
+    Plotly.newPlot('scoreGraph', data, layout);
+</script>
+<div class="center small-font">
+    <p>Double click on any of the legends squares to generate histogram of only that component</p>
+</div>
+</div>
+</div>
+</body>
+</html>

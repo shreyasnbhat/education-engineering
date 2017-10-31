@@ -4,10 +4,13 @@ from db.models import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from celery import Celery
+import datetime
 
 # Environment variables for uploads
 UPLOAD_FOLDER = '/home/shreyas/Projects/education-engineering/data'
 ALLOWED_EXTENSIONS = {'csv', 'pdf'}
+
+TOKEN_LIFETIME = str(datetime.timedelta(minutes=15))
 
 # Flask App initialization
 app = Flask(__name__)
