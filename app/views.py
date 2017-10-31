@@ -2,8 +2,8 @@ from flask import render_template, request, redirect, url_for, abort, flash, ses
 from flask.globals import session as session_obj
 from flask.ext.login import login_user, login_required, logout_user, current_user
 from sqlalchemy.orm import exc
-from sqlalchemy import and_
-import json, os, time, smtplib, bcrypt, hashlib, datetime
+from sqlalchemy import and_, func
+import json, os, time, smtplib, bcrypt, hashlib
 from app import *
 from random import choice
 from string import ascii_uppercase
@@ -272,20 +272,55 @@ def getScoresByStudent(course_id, student_id):
 
     course = db_session.query(Course).filter_by(id=course_id).one()
     scores = db_session.query(Score).filter_by(student_id=student_id,
-                                               course_id=course_id).all()
+                                               course_id=course_id).order_by(Score.name.asc()).all()
+    max_scores = db_session.query(MaxScore).filter_by(course_id=course_id).order_by(MaxScore.name.asc()).all()
     student = db_session.query(Student).filter_by(id=student_id).one()
-
+    course_total = db_session.query(MaxScore.maxscore).filter_by(course_id=course_id, name='Total').one()[0]
+    course_averages = dict(
+        db_session.query(Score.name, func.avg(Score.score).label('Sums')).filter_by(course_id=course_id).group_by(
+            Score.name).all())
     db_session.close()
 
-    # For graphing need to pass the objects in JSON so that they are parsed in Javascript
-    scores_num = json.dumps([i.score for i in scores])
-    scores_names = json.dumps([i.name for i in scores])
+    # Course Average Pre processing
+    for key in course_averages:
+        course_averages[key] = round(course_averages[key], 2)
+
+    # Get Mid Term Average and Final Average
+    try:
+        course_final_average = course_averages['Total']
+    except KeyError:
+        course_final_average = 'Average Pending'
+    try:
+        course_mid_term_average = course_averages['Mid Term Total']
+    except KeyError:
+        course_mid_term_average = 'Average Pending'
+
+    logger(course_mid_term_average=course_mid_term_average,
+           course_final_average=course_final_average)
+
+    # Scores with Total in their score name are stripped
+    scores_actual_json = json.dumps(
+        [scores[i].score for i in range(len(scores)) if 'total' not in str(scores[i].name).lower()])
+    scores_percentages = json.dumps(
+        [round(float(scores[i].score) * 100 / float(max_scores[i].maxscore), 2) for i in range(len(scores))
+         if 'total' not in str(scores[i].name).lower()])
+    scores_names = json.dumps([i.name for i in scores if 'total' not in str(i.name).lower()])
+    scores_distribution_percentages = json.dumps([i.maxscore for i in max_scores if 'total' not in str(i.name).lower()])
+    course_averages_for_plot = json.dumps(course_averages)
+
     return render_template('studentScore.html',
                            scores=scores,
                            course=course,
+                           max_scores=scores_distribution_percentages,
+                           course_total=course_total,
                            student=student,
                            x_=scores_names,
-                           y_=scores_num)
+                           y_percentages=scores_percentages,
+                           y_actual=scores_actual_json,
+                           course_averages=course_averages,
+                           course_averages_for_plot=course_averages_for_plot,
+                           course_mid_term_average=course_mid_term_average,
+                           course_final_average=course_final_average)
 
 
 @app.route('/predictions')
@@ -545,7 +580,7 @@ def getCourseMetrics(course_id):
         score_query = db_session.query(Score).filter_by(course_id=course_id, name=score_names[i]).all()
         list_scores_by_test_type.append([(float(j.score) / float(max_scores[i])) * 100 for j in score_query])
 
-    logger(lists = list_scores_by_test_type)
+    logger(lists=list_scores_by_test_type)
     db_session.close()
 
     return render_template('metrics.html',
