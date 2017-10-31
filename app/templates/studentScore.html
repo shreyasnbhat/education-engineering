@@ -25,10 +25,60 @@
 <div class="blue-grey lighten-3 block-style">
         <h4>Graphs</h4>
 </div>
+<div class="row">
+    <div class="col s6" id="myDiv"></div>
+    <div class="col s6">
+        <div class="card blue-grey darken-1 block-style">
+            <div class="card-content white-text">
+                <div class="row">
+                    <p class="col s6 small-font center"><strong>Mid Term Average</strong></p>
+                    <p class="col s6 small-font center"><strong>Final Average</strong></p>
+                </div>
+                <div class="row">
+                    <p class="col s6 small-font center">{{course_mid_term_average}}</p>
+                    <p class="col s6 small-font center">{{course_final_average}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var percentage_scores = JSON.parse({{max_scores | tojson}})
+    var score_labels = JSON.parse({{x_|tojson}})
+
+    var data = [{
+        values: percentage_scores,
+        labels: score_labels,
+        type: 'pie',
+        textfont: {
+            color: '#ffffff'
+        }
+    }];
+
+    var layout = {
+        height: 400,
+        width: 500,
+        title: 'Component Weightage',
+        font: {
+            family: 'Courier New, monospace',
+            size: 18,
+            color: '#7f7f7f'
+            }
+    };
+
+    Plotly.newPlot('myDiv', data, layout);
+</script>
 <div id="scoreGraph"></div>
 <script>
+    function round(value, decimals) {
+        return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+    }
+
     var score_labels = JSON.parse({{x_|tojson}})
-    var scores_numbers = JSON.parse({{y_|tojson}})
+    var scores_percentages = JSON.parse({{y_percentages|tojson}})
+    var course_averages = JSON.parse({{course_averages_for_plot | tojson}})
+    var scores_actual = JSON.parse({{y_actual|tojson}})
+    var max_scores = JSON.parse({{max_scores|tojson}})
 
     // Variables for visualization split
     var test_labels = [];
@@ -41,13 +91,31 @@
     for (var i = 0; i < score_labels.length; i++) {
         if (score_labels[i].toLowerCase().indexOf('quiz') !== -1) {
             quiz_labels.push(score_labels[i]);
-            quiz_scores.push(scores_numbers[i]);
+            quiz_scores.push(scores_actual[i]);
         } else if (score_labels[i].toLowerCase().indexOf('ass') !== -1) {
             assignment_labels.push(score_labels[i]);
-            assignment_scores.push(scores_numbers[i]);
+            assignment_scores.push(scores_actual[i]);
         } else if (score_labels[i].toLowerCase().indexOf('test') !== -1 || score_labels[i].toLowerCase().indexOf('compre') !== -1 || score_labels[i].toLowerCase().indexOf('term') !== -1) {
             test_labels.push(score_labels[i]);
-            test_scores.push(scores_numbers[i]);
+            test_scores.push(scores_actual[i]);
+        }
+    }
+
+    var hovertext = [];
+    var averages = [];
+
+    for (var key in score_labels) {
+        if (course_averages.hasOwnProperty(score_labels[key])) {
+            averages.push(course_averages[score_labels[key]]*100/max_scores[key]);
+            var diff = Number(scores_actual[key]) - Number(course_averages[score_labels[key]]);
+            var inv_diff = 0 - diff;
+            if ( diff >= 0) {
+                hovertext.push("Average + "  + round(diff,2) );
+            } else if ( diff === 0 ) {
+                hovertext.push("Average");
+            } else {
+                hovertext.push("Average - "  +  round(inv_diff,2));
+            }
         }
     }
 
@@ -97,31 +165,43 @@
         yaxis: 'y3'
     };
 
-    var completeBarChart = {
+    var completeBarChartPercentagesScores = {
         x: score_labels,
-        y: scores_numbers,
-        text: scores_numbers,
-        textposition: 'auto',
-        hoverinfo: 'none',
+        y: scores_percentages,
+        mode: 'lines+markers',
+        text: hovertext,
+        textposition: 'top',
         textfont: {
             color: '#000000'
         },
-        type: 'bar',
+        type: 'scatter',
         name: 'Scores',
         marker: {color: '#ff6e40'},
         xaxis: 'x4',
         yaxis: 'y4'
     };
 
-    var data = [testBarChart,quizBarChart,assignmentsBarChart,completeBarChart];
+    var completeBarChartAverages = {
+        x: score_labels,
+        y: averages,
+        mode: 'lines+markers',
+        type: 'scatter',
+        name: 'Averages',
+        marker: {color: '#5c6bc0'},
+        xaxis: 'x4',
+        yaxis: 'y4'
+    };
+
+
+    var data = [testBarChart,quizBarChart,assignmentsBarChart,completeBarChartPercentagesScores,completeBarChartAverages];
 
     var layout = {
-        yaxis: {domain: [0.733, 1]},
+        yaxis: {domain: [0.783, 1]},
         xaxis2: {
             domain: [0,0.4],
             anchor: 'y2'},
         yaxis2: {
-            domain: [0.366, 0.633],
+            domain: [0.466, 0.683],
             anchor: 'x2'
         },
         xaxis3: {
@@ -129,17 +209,17 @@
             anchor: 'y3'
             },
         yaxis3: {
-            domain: [0.366, 0.633],
+            domain: [0.466, 0.683],
             anchor: 'x3'
         },
         xaxis4: {
             anchor: 'y4'
         },
         yaxis4: {
-            domain: [0, 0.266],
+            domain: [0, 0.366],
             anchor: 'x4'
         },
-        height: 1000,
+        height: 1200,
         width: 1500,
         font: {
             family: 'Courier New, monospace',
