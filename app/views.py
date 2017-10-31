@@ -307,6 +307,7 @@ def getScoresByStudent(course_id, student_id):
     scores_names = json.dumps([i.name for i in scores if 'total' not in str(i.name).lower()])
     scores_distribution_percentages = json.dumps([i.maxscore for i in max_scores if 'total' not in str(i.name).lower()])
     course_averages_for_plot = json.dumps(course_averages)
+
     return render_template('studentScore.html',
                            scores=scores,
                            course=course,

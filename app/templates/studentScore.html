@@ -38,6 +38,9 @@
                     <p class="col s6 small-font center">{{course_mid_term_average}}</p>
                     <p class="col s6 small-font center">{{course_final_average}}</p>
                 </div>
+                <div class="row">
+                    <p class="col s12 small-font center" id="state"></p>
+                </div>
             </div>
         </div>
     </div>
@@ -80,6 +83,8 @@
     var scores_actual = JSON.parse({{y_actual|tojson}})
     var max_scores = JSON.parse({{max_scores|tojson}})
 
+    var state = 0;
+
     // Variables for visualization split
     var test_labels = [];
     var test_scores = [];
@@ -108,15 +113,25 @@
         if (course_averages.hasOwnProperty(score_labels[key])) {
             averages.push(round(course_averages[score_labels[key]]*100/max_scores[key],2));
             var diff = Number(scores_actual[key]) - Number(course_averages[score_labels[key]]);
-            var inv_diff = 0 - diff;
+            state += diff;
             if ( diff >= 0) {
                 hovertext.push("Average + "  + round(diff,2));
             } else if ( diff === 0 ) {
                 hovertext.push("Average");
             } else {
-                hovertext.push("Average - "  +  round(inv_diff,2));
+                hovertext.push("Average - "  +  (-round(diff,2)));
             }
         }
+    }
+
+
+    // DOM Manipulation
+    if(state > 0 ) {
+        document.getElementById("state").innerHTML = "Average + " + round(state, 2);
+    } else if ( state === 0) {
+        document.getElementById("state").innerHTML = "Average";
+    } else {
+        document.getElementById("state").innerHTML = "Average - " + (-round(state, 2));
     }
 
     var testBarChart = {
