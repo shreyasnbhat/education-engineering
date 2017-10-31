@@ -91,13 +91,13 @@
     for (var i = 0; i < score_labels.length; i++) {
         if (score_labels[i].toLowerCase().indexOf('quiz') !== -1) {
             quiz_labels.push(score_labels[i]);
-            quiz_scores.push(scores_actual[i]);
+            quiz_scores.push(round(scores_actual[i],2));
         } else if (score_labels[i].toLowerCase().indexOf('ass') !== -1) {
             assignment_labels.push(score_labels[i]);
-            assignment_scores.push(scores_actual[i]);
+            assignment_scores.push(round(scores_actual[i],2));
         } else if (score_labels[i].toLowerCase().indexOf('test') !== -1 || score_labels[i].toLowerCase().indexOf('compre') !== -1 || score_labels[i].toLowerCase().indexOf('term') !== -1) {
             test_labels.push(score_labels[i]);
-            test_scores.push(scores_actual[i]);
+            test_scores.push(round(scores_actual[i],2));
         }
     }
 
@@ -106,11 +106,11 @@
 
     for (var key in score_labels) {
         if (course_averages.hasOwnProperty(score_labels[key])) {
-            averages.push(course_averages[score_labels[key]]*100/max_scores[key]);
+            averages.push(round(course_averages[score_labels[key]]*100/max_scores[key],2));
             var diff = Number(scores_actual[key]) - Number(course_averages[score_labels[key]]);
             var inv_diff = 0 - diff;
             if ( diff >= 0) {
-                hovertext.push("Average + "  + round(diff,2) );
+                hovertext.push("Average + "  + round(diff,2));
             } else if ( diff === 0 ) {
                 hovertext.push("Average");
             } else {
@@ -175,7 +175,7 @@
             color: '#000000'
         },
         type: 'scatter',
-        name: 'Scores',
+        name: 'Score',
         marker: {color: '#ff6e40'},
         xaxis: 'x4',
         yaxis: 'y4'
@@ -186,7 +186,7 @@
         y: averages,
         mode: 'lines+markers',
         type: 'scatter',
-        name: 'Averages',
+        name: 'Average',
         marker: {color: '#5c6bc0'},
         xaxis: 'x4',
         yaxis: 'y4'
@@ -217,7 +217,13 @@
         },
         yaxis4: {
             domain: [0, 0.366],
-            anchor: 'x4'
+            anchor: 'x4',
+            title: 'Scores and Averages in Percentage' ,
+            titlefont: {
+                  family: 'Courier New, monospace',
+                  size: 18,
+                  color: '#7f7f7f'
+            }
         },
         height: 1200,
         width: 1500,
