@@ -21,6 +21,7 @@ def generate_sample_db(path, course_id, course_name, db_session):
     sample_marks = pd.read_csv(path)
     sample_mark_frame = pd.read_csv(path)
     sample_mark_frame.drop(['Name', 'ID Number'], axis=1, inplace=True)
+    print sample_mark_frame
 
     # Any mark column must be of the type mark_name-max_marks
     sample_mark_columns = sample_mark_frame.columns
@@ -70,6 +71,7 @@ def generate_sample_db(path, course_id, course_name, db_session):
                                      course_id=course_id,
                                      score=score))
                 db_session.commit()
+                print mark_column, "Success!"
             except IntegrityError:
                 db_session.rollback()
                 old_score = db_session.query(Score).filter_by(student_id=formatted_student_id,
@@ -77,7 +79,9 @@ def generate_sample_db(path, course_id, course_name, db_session):
                                                               course_id=course_id).one()
                 old_score.score = score
                 db_session.commit()
+                print mark_column, "Success!"
 
+    print "Marks Added!"
     # Add authentication credentials for users. Default password set.
     ids = [i.id for i in db_session.query(Student).all()]
     passwords = ['student']
@@ -146,6 +150,8 @@ def generate_sample_db(path, course_id, course_name, db_session):
         db_session.commit()
     except IntegrityError:
         db_session.rollback()
+
+    print "Added Course Data!"
 
 
 if __name__ == '__main__':

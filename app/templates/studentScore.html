@@ -54,6 +54,12 @@
     var testBarChart = {
         x: test_labels,
         y: test_scores,
+        text: test_scores,
+        textposition: 'auto',
+        hoverinfo: 'none',
+        textfont: {
+            color: '#000000'
+        },
         type: 'bar',
         name: 'Tests',
         marker: {color: '#64b5f6'}
@@ -62,6 +68,12 @@
     var quizBarChart = {
         x: quiz_labels,
         y: quiz_scores,
+        text: quiz_scores,
+        textposition: 'auto',
+        hoverinfo: 'none',
+        textfont: {
+            color: '#000000'
+        },
         type: 'bar',
         name: 'Quizzes',
         marker: {color: '#81c784'},
@@ -72,6 +84,12 @@
     var assignmentsBarChart = {
         x: assignment_labels,
         y: assignment_scores,
+        text: assignment_scores,
+        textfont: {
+            color: '#000000'
+        },
+        textposition: 'auto',
+        hoverinfo: 'none',
         type: 'bar',
         name: 'Assignments',
         marker: {color: '#ffb74d'},
@@ -82,6 +100,12 @@
     var completeBarChart = {
         x: score_labels,
         y: scores_numbers,
+        text: scores_numbers,
+        textposition: 'auto',
+        hoverinfo: 'none',
+        textfont: {
+            color: '#000000'
+        },
         type: 'bar',
         name: 'Scores',
         marker: {color: '#ff6e40'},
