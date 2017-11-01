@@ -279,11 +279,17 @@
     {% if scores %}
     <ul class="collection">
         {% for i in scores %}
-        <li class="collection-item">
-            <p><strong>{{i.name}}</strong>
-                <br>
-                {{i.score}}
-            </p>
+        <li class="collection-item row">
+            <p class="col s11"><strong>{{i.name}}</strong></p>
+            <p class="col s1">{{i.score}}</p>
+            {% if isAdmin %}
+            <form action="{{url_for('editMarks',student_id=student.id,course_id=course.id,test_name=i.name)}}"
+                  method="POST" class="row">
+                <input name="update-score" placeholder="Updated Marks" class="validate col s2">
+                <button name="action" class="btn waves-effect waves-light blue-grey darken-4 col s1">Confirm
+                </button>
+            </form>
+            {% endif %}
             {% endfor %}
     </ul>
     {% else %}

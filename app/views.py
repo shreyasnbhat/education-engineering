@@ -347,7 +347,8 @@ def getScoresByStudent(course_id, student_id):
                            course_averages=course_averages,
                            course_averages_for_plot=course_averages_for_plot,
                            course_mid_term_average=course_mid_term_average,
-                           course_final_average=course_final_average)
+                           course_final_average=course_final_average,
+                           isAdmin=session_obj['isAdmin'])
 
 
 @app.route('/predictions')
@@ -615,3 +616,18 @@ def getCourseMetrics(course_id):
                            max_score=max_scores,
                            scores=list_scores_by_test_type,
                            names=score_names)
+
+
+@login_required
+@app.route('/courses/<string:course_id>/<string:student_id>/<string:test_name>/edit', methods=['POST'])
+def editMarks(student_id, course_id, test_name):
+    db_session = DBSession()
+    updated_score = request.form['update-score'].encode('utf-8')
+    max_score = db_session.query(MaxScore).filter_by(course_id=course_id, name=test_name).one()
+
+    if float(updated_score) <= max_score:
+        score = db_session.query(Score).filter_by(course_id=course_id, student_id=student_id, name=test_name).one()
+        score.score = updated_score
+        db_session.commit()
+
+    return redirect(url_for('getCourses'))
