@@ -288,7 +288,8 @@ def getScoresByStudent(course_id, student_id):
     student = db_session.query(Student). \
         filter_by(id=student_id).one()
 
-    course_total = db_session.query(MaxScore.maxscore).filter_by(course_id=course_id, name='Total').one()[0]
+    course_total = db_session.query(MaxScore.maxscore).filter_by(course_id=course_id,
+                                                                 name='Total').one()[0]
 
     average_query_unsorted = db_session.query(Score.name, func.avg(Score.score).label('Sums')). \
         filter_by(course_id=course_id). \
@@ -327,12 +328,12 @@ def getScoresByStudent(course_id, student_id):
 
     # Scores with Total in their score name are stripped
     scores_actual_json = json.dumps(
-        [scores[i].score for i in range(len(scores)) if 'total' not in str(scores[i].name).lower()])
+        [scores[i].score for i in range(len(scores)) if 'tal' not in str(scores[i].name).lower()])
     scores_percentages = json.dumps(
         [round(float(scores[i].score) * 100 / float(max_scores[i].maxscore), 2) for i in range(len(scores))
-         if 'total' not in str(scores[i].name).lower()])
-    scores_names = json.dumps([i.name for i in scores if 'total' not in str(i.name).lower()])
-    scores_distribution_percentages = json.dumps([i.maxscore for i in max_scores if 'total' not in str(i.name).lower()])
+         if 'tal' not in str(scores[i].name).lower()])
+    scores_names = json.dumps([i.name for i in scores if 'tal' not in str(i.name).lower()])
+    scores_distribution_percentages = json.dumps([i.maxscore for i in max_scores if 'tal' not in str(i.name).lower()])
     course_averages_for_plot = json.dumps(course_averages)
 
     return render_template('studentScore.html',
@@ -605,10 +606,10 @@ def getCourseMetrics(course_id):
     size_of_score_names = len(score_names)
 
     for i in range(size_of_score_names):
-        score_query = db_session.query(Score).filter_by(course_id=course_id, name=score_names[i]).all()
+        score_query = db_session.query(Score).filter_by(course_id=course_id,
+                                                        name=score_names[i]).all()
         list_scores_by_test_type.append([(float(j.score) / float(max_scores[i])) * 100 for j in score_query])
 
-    logger(lists=list_scores_by_test_type)
     db_session.close()
 
     return render_template('metrics.html',
@@ -623,10 +624,45 @@ def getCourseMetrics(course_id):
 def editMarks(student_id, course_id, test_name):
     db_session = DBSession()
     updated_score = request.form['update-score'].encode('utf-8')
-    max_score = db_session.query(MaxScore).filter_by(course_id=course_id, name=test_name).one()
+    max_score = db_session.query(MaxScore).filter_by(course_id=course_id,
+                                                     name=test_name).one()
 
+    # Max score check
     if float(updated_score) <= max_score:
-        score = db_session.query(Score).filter_by(course_id=course_id, student_id=student_id, name=test_name).one()
+        score = db_session.query(Score).filter_by(course_id=course_id,
+                                                  student_id=student_id,
+                                                  name=test_name).one()
+        diff = float(updated_score) - score.score
+
+        # Total and Mid Term Total Update
+        try:
+            mid_term_total_priority = \
+            db_session.query(MaxScore.priority).filter_by(course_id=course_id,
+                                                          name='Mid Term Total').one()[0]
+            final_total_priority = \
+            db_session.query(MaxScore.priority).filter_by(course_id=course_id,
+                                                          name='Total').one()[0]
+
+            mid_term_total = db_session.query(Score).filter_by(course_id=course_id,
+                                                               student_id=student_id,
+                                                               name='Mid Term Total').one()
+            final_total = db_session.query(Score).filter_by(course_id=course_id,
+                                                            student_id=student_id,
+                                                            name='Total').one()
+            logger(total=final_total)
+
+            if max_score.priority < mid_term_total_priority:
+                mid_term_total.score += diff
+                final_total.score += diff
+                db_session.commit()
+            elif mid_term_total_priority < max_score.priority < final_total_priority:
+                final_total.score += diff
+                db_session.commit()
+        except:
+            pass
+
+
+
         score.score = updated_score
         db_session.commit()
 

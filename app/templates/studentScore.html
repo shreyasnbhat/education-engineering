@@ -100,7 +100,9 @@
         } else if (score_labels[i].toLowerCase().indexOf('ass') !== -1) {
             assignment_labels.push(score_labels[i]);
             assignment_scores.push(round(scores_actual[i],2));
-        } else if (score_labels[i].toLowerCase().indexOf('test') !== -1 || score_labels[i].toLowerCase().indexOf('compre') !== -1 || score_labels[i].toLowerCase().indexOf('term') !== -1) {
+        } else if (score_labels[i].toLowerCase().indexOf('test') !== -1 ||
+            score_labels[i].toLowerCase().indexOf('compre') !== -1 ||
+            score_labels[i].toLowerCase().indexOf('mid') !== -1) {
             test_labels.push(score_labels[i]);
             test_scores.push(round(scores_actual[i],2));
         }
@@ -286,7 +288,7 @@
             <form action="{{url_for('editMarks',student_id=student.id,course_id=course.id,test_name=i.name)}}"
                   method="POST" class="row">
                 <input name="update-score" placeholder="Updated Marks" class="validate col s2">
-                <button name="action" class="btn waves-effect waves-light blue-grey darken-4 col s1">Confirm
+                <button name="action" class="btn waves-effect waves-light blue-grey darken-4 s1">Confirm
                 </button>
             </form>
             {% endif %}

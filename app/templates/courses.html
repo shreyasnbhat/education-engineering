@@ -38,7 +38,7 @@
             {% if admin %}
             <a href="{{url_for('getStudentsByCourse',course_id=course.id)}}">
             {% else %}
-            <a href="{{url_for('getScoresByStudent',course_id=course.id, student_id=user_id)}}"></a>
+            <a href="{{url_for('getScoresByStudent',course_id=course.id, student_id=user_id)}}">
             {% endif %}
             <p class="small-font">{{course.name}}</p>
             <p> {{course.id}} </p>
