@@ -4,7 +4,7 @@ import pandas as pd
 from db import id_format
 from sqlalchemy.orm import sessionmaker
 from models import *
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.exc import IntegrityError
 
 
@@ -26,6 +26,16 @@ def generate_sample_db(path, course_id, course_name, db_session):
     # Any mark column must be of the type mark_name-max_marks
     sample_mark_columns = sample_mark_frame.columns
 
+    print sample_mark_columns
+
+    # Set priority for scores for ordering in graphs here
+    try:
+        priority = db_session.query(func.max(MaxScore.priority).label("max_priority")).filter_by(course_id=course_id).scalar() + 1
+    except:
+        priority = 0
+
+    print "priority =",  priority
+
     for i in sample_mark_columns:
         score_name, score_max = i.strip().split('-')
 
@@ -33,8 +43,10 @@ def generate_sample_db(path, course_id, course_name, db_session):
         try:
             db_session.add(MaxScore(course_id=course_id,
                                     name=score_name,
-                                    maxscore=score_max))
+                                    maxscore=score_max,
+                                    priority=priority))
             db_session.commit()
+            priority += 1
         except IntegrityError:
             db_session.rollback()
 

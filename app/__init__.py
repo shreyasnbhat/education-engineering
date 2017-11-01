@@ -27,7 +27,7 @@ celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
 # Final Configuration depending upon sample version
-engine = create_engine('sqlite:///test.db')
+engine = create_engine('sqlite:///new.db')
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
 

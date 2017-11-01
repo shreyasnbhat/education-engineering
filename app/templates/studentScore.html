@@ -211,21 +211,42 @@
     var data = [testBarChart,quizBarChart,assignmentsBarChart,completeBarChartPercentagesScores,completeBarChartAverages];
 
     var layout = {
-        yaxis: {domain: [0.783, 1]},
+        yaxis: {
+            domain: [0.783, 1],
+            title: 'Major Test Scores',
+            titlefont: {
+                family: 'Courier New, monospace',
+                size: 18,
+                color: '#7f7f7f'
+            }
+        },
         xaxis2: {
-            domain: [0,0.4],
-            anchor: 'y2'},
+            domain: [0, 0.4],
+            anchor: 'y2'
+        },
         yaxis2: {
             domain: [0.466, 0.683],
-            anchor: 'x2'
+            anchor: 'x2',
+            title: 'Quiz Scores',
+            titlefont: {
+                family: 'Courier New, monospace',
+                size: 18,
+                color: '#7f7f7f'
+            }
         },
         xaxis3: {
-            domain: [0.6,1],
+            domain: [0.6, 1],
             anchor: 'y3'
-            },
+        },
         yaxis3: {
             domain: [0.466, 0.683],
-            anchor: 'x3'
+            anchor: 'x3',
+            title: 'Assignments Scores',
+            titlefont: {
+                family: 'Courier New, monospace',
+                size: 18,
+                color: '#7f7f7f'
+            }
         },
         xaxis4: {
             anchor: 'y4'
@@ -233,11 +254,11 @@
         yaxis4: {
             domain: [0, 0.366],
             anchor: 'x4',
-            title: 'Scores and Averages in Percentage' ,
+            title: 'Scores and Averages in Percentage',
             titlefont: {
-                  family: 'Courier New, monospace',
-                  size: 18,
-                  color: '#7f7f7f'
+                family: 'Courier New, monospace',
+                size: 18,
+                color: '#7f7f7f'
             }
         },
         height: 1200,
@@ -246,7 +267,7 @@
             family: 'Courier New, monospace',
             size: 18,
             color: '#7f7f7f'
-            }
+        }
     };
 
     Plotly.newPlot('scoreGraph', data, layout);

@@ -2,8 +2,9 @@ from flask import render_template, request, redirect, url_for, abort, flash, ses
 from flask.globals import session as session_obj
 from flask.ext.login import login_user, login_required, logout_user, current_user
 from sqlalchemy.orm import exc
-from sqlalchemy import and_, func
+from sqlalchemy import and_
 import json, os, time, smtplib, bcrypt, hashlib
+from collections import OrderedDict
 from app import *
 from random import choice
 from string import ascii_uppercase
@@ -270,15 +271,41 @@ def getStudentsByCourse(course_id):
 def getScoresByStudent(course_id, student_id):
     db_session = DBSession()
 
-    course = db_session.query(Course).filter_by(id=course_id).one()
-    scores = db_session.query(Score).filter_by(student_id=student_id,
-                                               course_id=course_id).order_by(Score.name.asc()).all()
-    max_scores = db_session.query(MaxScore).filter_by(course_id=course_id).order_by(MaxScore.name.asc()).all()
-    student = db_session.query(Student).filter_by(id=student_id).one()
+    course = db_session.query(Course). \
+        filter_by(id=course_id).one()
+
+    scores = db_session.query(Score). \
+        filter(Score.student_id == student_id). \
+        filter(Score.course_id == course_id). \
+        filter(Score.course_id == MaxScore.course_id). \
+        filter(Score.name == MaxScore.name). \
+        order_by(MaxScore.priority.asc()).all()
+
+    max_scores = db_session.query(MaxScore). \
+        filter_by(course_id=course_id). \
+        order_by(MaxScore.priority.asc()).all()
+
+    student = db_session.query(Student). \
+        filter_by(id=student_id).one()
+
     course_total = db_session.query(MaxScore.maxscore).filter_by(course_id=course_id, name='Total').one()[0]
-    course_averages = dict(
-        db_session.query(Score.name, func.avg(Score.score).label('Sums')).filter_by(course_id=course_id).group_by(
-            Score.name).all())
+
+    average_query_unsorted = db_session.query(Score.name, func.avg(Score.score).label('Sums')). \
+        filter_by(course_id=course_id). \
+        group_by(Score.name). \
+        subquery()
+
+    average_query_sorted = db_session.query(average_query_unsorted.c.name,
+                                            average_query_unsorted.c.Sums.label('average')). \
+        filter(average_query_unsorted.c.name == MaxScore.name). \
+        filter(MaxScore.course_id == course_id). \
+        order_by(MaxScore.priority.asc()). \
+        all()
+
+    print average_query_sorted
+
+    course_averages = OrderedDict(average_query_sorted)
+
     db_session.close()
 
     # Course Average Pre processing

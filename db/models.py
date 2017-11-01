@@ -31,6 +31,7 @@ class MaxScore(Base):
     course_id = Column(String(10), primary_key=True)
     name = Column(String(20), primary_key=True)
     maxscore = Column(Integer)
+    priority = Column(Integer)
     ForeignKeyConstraint(['course_id', 'name'], ['scores.course_id', 'scores.name'])
 
 
