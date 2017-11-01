@@ -13,6 +13,85 @@ from db.samplev2 import generate_sample_db
 from werkzeug.utils import secure_filename
 
 
+# General Function
+def process_student_data(db_session, course_id, student_id):
+    course = db_session.query(Course). \
+        filter_by(id=course_id).one()
+
+    scores = db_session.query(Score). \
+        filter(Score.student_id == student_id). \
+        filter(Score.course_id == course_id). \
+        filter(Score.course_id == MaxScore.course_id). \
+        filter(Score.name == MaxScore.name). \
+        order_by(MaxScore.priority.asc()).all()
+
+    max_scores = db_session.query(MaxScore). \
+        filter_by(course_id=course_id). \
+        order_by(MaxScore.priority.asc()).all()
+
+    student = db_session.query(Student). \
+        filter_by(id=student_id).one()
+
+    course_total = db_session.query(MaxScore.maxscore).filter_by(course_id=course_id,
+                                                                 name='Total').one()[0]
+
+    average_query_unsorted = db_session.query(Score.name, func.avg(Score.score).label('Sums')). \
+        filter_by(course_id=course_id). \
+        group_by(Score.name). \
+        subquery()
+
+    average_query_sorted = db_session.query(average_query_unsorted.c.name,
+                                            average_query_unsorted.c.Sums.label('average')). \
+        filter(average_query_unsorted.c.name == MaxScore.name). \
+        filter(MaxScore.course_id == course_id). \
+        order_by(MaxScore.priority.asc()). \
+        all()
+
+    print average_query_sorted
+
+    course_averages = OrderedDict(average_query_sorted)
+
+    # Course Average Pre processing
+    for key in course_averages:
+        course_averages[key] = round(course_averages[key], 2)
+
+    # Get Mid Term Average and Final Average
+    try:
+        course_final_average = course_averages['Total']
+    except KeyError:
+        course_final_average = 'Average Pending'
+    try:
+        course_mid_term_average = course_averages['Mid Term Total']
+    except KeyError:
+        course_mid_term_average = 'Average Pending'
+
+    logger(course_mid_term_average=course_mid_term_average,
+           course_final_average=course_final_average)
+
+    # Scores with Total in their score name are stripped
+    scores_actual_json = json.dumps(
+        [scores[i].score for i in range(len(scores)) if 'tal' not in str(scores[i].name).lower()])
+    scores_percentages = json.dumps(
+        [round(float(scores[i].score) * 100 / float(max_scores[i].maxscore), 2) for i in range(len(scores))
+         if 'tal' not in str(scores[i].name).lower()])
+    scores_names = json.dumps([i.name for i in scores if 'tal' not in str(i.name).lower()])
+    scores_distribution_percentages = json.dumps([i.maxscore for i in max_scores if 'tal' not in str(i.name).lower()])
+    course_averages_for_plot = json.dumps(course_averages)
+
+    return scores, \
+           course, \
+           scores_distribution_percentages, \
+           course_total, \
+           student, \
+           scores_names, \
+           scores_percentages, \
+           scores_actual_json, \
+           course_averages, \
+           course_averages_for_plot, \
+           course_mid_term_average, \
+           course_final_average
+
+
 @app.before_request
 def make_session_permanent():
     """
@@ -271,70 +350,19 @@ def getStudentsByCourse(course_id):
 def getScoresByStudent(course_id, student_id):
     db_session = DBSession()
 
-    course = db_session.query(Course). \
-        filter_by(id=course_id).one()
-
-    scores = db_session.query(Score). \
-        filter(Score.student_id == student_id). \
-        filter(Score.course_id == course_id). \
-        filter(Score.course_id == MaxScore.course_id). \
-        filter(Score.name == MaxScore.name). \
-        order_by(MaxScore.priority.asc()).all()
-
-    max_scores = db_session.query(MaxScore). \
-        filter_by(course_id=course_id). \
-        order_by(MaxScore.priority.asc()).all()
-
-    student = db_session.query(Student). \
-        filter_by(id=student_id).one()
-
-    course_total = db_session.query(MaxScore.maxscore).filter_by(course_id=course_id,
-                                                                 name='Total').one()[0]
-
-    average_query_unsorted = db_session.query(Score.name, func.avg(Score.score).label('Sums')). \
-        filter_by(course_id=course_id). \
-        group_by(Score.name). \
-        subquery()
-
-    average_query_sorted = db_session.query(average_query_unsorted.c.name,
-                                            average_query_unsorted.c.Sums.label('average')). \
-        filter(average_query_unsorted.c.name == MaxScore.name). \
-        filter(MaxScore.course_id == course_id). \
-        order_by(MaxScore.priority.asc()). \
-        all()
-
-    print average_query_sorted
-
-    course_averages = OrderedDict(average_query_sorted)
+    scores, \
+    course, \
+    scores_distribution_percentages, \
+    course_total, \
+    student, \
+    scores_names, \
+    scores_percentages, \
+    scores_actual_json, \
+    course_averages, \
+    course_averages_for_plot, \
+    course_mid_term_average, course_final_average = process_student_data(db_session, course_id, student_id)
 
     db_session.close()
-
-    # Course Average Pre processing
-    for key in course_averages:
-        course_averages[key] = round(course_averages[key], 2)
-
-    # Get Mid Term Average and Final Average
-    try:
-        course_final_average = course_averages['Total']
-    except KeyError:
-        course_final_average = 'Average Pending'
-    try:
-        course_mid_term_average = course_averages['Mid Term Total']
-    except KeyError:
-        course_mid_term_average = 'Average Pending'
-
-    logger(course_mid_term_average=course_mid_term_average,
-           course_final_average=course_final_average)
-
-    # Scores with Total in their score name are stripped
-    scores_actual_json = json.dumps(
-        [scores[i].score for i in range(len(scores)) if 'tal' not in str(scores[i].name).lower()])
-    scores_percentages = json.dumps(
-        [round(float(scores[i].score) * 100 / float(max_scores[i].maxscore), 2) for i in range(len(scores))
-         if 'tal' not in str(scores[i].name).lower()])
-    scores_names = json.dumps([i.name for i in scores if 'tal' not in str(i.name).lower()])
-    scores_distribution_percentages = json.dumps([i.maxscore for i in max_scores if 'tal' not in str(i.name).lower()])
-    course_averages_for_plot = json.dumps(course_averages)
 
     return render_template('studentScore.html',
                            scores=scores,
@@ -623,47 +651,73 @@ def getCourseMetrics(course_id):
 @app.route('/courses/<string:course_id>/<string:student_id>/<string:test_name>/edit', methods=['POST'])
 def editMarks(student_id, course_id, test_name):
     db_session = DBSession()
-    updated_score = request.form['update-score'].encode('utf-8')
-    max_score = db_session.query(MaxScore).filter_by(course_id=course_id,
-                                                     name=test_name).one()
 
-    # Max score check
-    if float(updated_score) <= max_score:
-        score = db_session.query(Score).filter_by(course_id=course_id,
-                                                  student_id=student_id,
-                                                  name=test_name).one()
-        diff = float(updated_score) - score.score
+    if session_obj['isAdmin']:
+        updated_score = request.form['update-score'].encode('utf-8')
+        max_score = db_session.query(MaxScore).filter_by(course_id=course_id,
+                                                         name=test_name).one()
+        # Max score check
+        if float(updated_score) <= max_score:
+            score = db_session.query(Score).filter_by(course_id=course_id,
+                                                      student_id=student_id,
+                                                      name=test_name).one()
+            diff = float(updated_score) - score.score
 
-        # Total and Mid Term Total Update
-        try:
-            mid_term_total_priority = \
-            db_session.query(MaxScore.priority).filter_by(course_id=course_id,
-                                                          name='Mid Term Total').one()[0]
-            final_total_priority = \
-            db_session.query(MaxScore.priority).filter_by(course_id=course_id,
-                                                          name='Total').one()[0]
+            # Total and Mid Term Total Update
+            try:
+                mid_term_total_priority = \
+                    db_session.query(MaxScore.priority).filter_by(course_id=course_id,
+                                                                  name='Mid Term Total').one()[0]
+                final_total_priority = \
+                    db_session.query(MaxScore.priority).filter_by(course_id=course_id,
+                                                                  name='Total').one()[0]
 
-            mid_term_total = db_session.query(Score).filter_by(course_id=course_id,
-                                                               student_id=student_id,
-                                                               name='Mid Term Total').one()
-            final_total = db_session.query(Score).filter_by(course_id=course_id,
-                                                            student_id=student_id,
-                                                            name='Total').one()
-            logger(total=final_total)
+                mid_term_total = db_session.query(Score).filter_by(course_id=course_id,
+                                                                   student_id=student_id,
+                                                                   name='Mid Term Total').one()
+                final_total = db_session.query(Score).filter_by(course_id=course_id,
+                                                                student_id=student_id,
+                                                                name='Total').one()
+                logger(total=final_total)
 
-            if max_score.priority < mid_term_total_priority:
-                mid_term_total.score += diff
-                final_total.score += diff
-                db_session.commit()
-            elif mid_term_total_priority < max_score.priority < final_total_priority:
-                final_total.score += diff
-                db_session.commit()
-        except:
-            pass
+                if max_score.priority < mid_term_total_priority:
+                    mid_term_total.score += diff
+                    final_total.score += diff
+                    db_session.commit()
+                elif mid_term_total_priority < max_score.priority < final_total_priority:
+                    final_total.score += diff
+                    db_session.commit()
+            except:
+                pass
 
+            score.score = updated_score
+            db_session.commit()
 
+    scores, \
+    course, \
+    scores_distribution_percentages, \
+    course_total, \
+    student, \
+    scores_names, \
+    scores_percentages, \
+    scores_actual_json, \
+    course_averages, \
+    course_averages_for_plot, \
+    course_mid_term_average, course_final_average = process_student_data(db_session, course_id, student_id)
 
-        score.score = updated_score
-        db_session.commit()
+    db_session.close()
 
-    return redirect(url_for('getCourses'))
+    return render_template('studentScore.html',
+                           scores=scores,
+                           course=course,
+                           max_scores=scores_distribution_percentages,
+                           course_total=course_total,
+                           student=student,
+                           x_=scores_names,
+                           y_percentages=scores_percentages,
+                           y_actual=scores_actual_json,
+                           course_averages=course_averages,
+                           course_averages_for_plot=course_averages_for_plot,
+                           course_mid_term_average=course_mid_term_average,
+                           course_final_average=course_final_average,
+                           isAdmin=session_obj['isAdmin'])
