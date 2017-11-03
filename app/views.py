@@ -25,9 +25,43 @@ def process_student_data(db_session, course_id, student_id):
         filter(Score.name == MaxScore.name). \
         order_by(MaxScore.priority.asc()).all()
 
+
+    # maximum_scores = db_session.query(Score.name, func.max(Score.score).label('Maxs')).filter_by(course_id = course_id).group_by(Score.name)
+    #
+    # minimum_scores = db_session.query(Score.name, func.min(Score.score).label('Maxs')).filter_by(
+    #     course_id=course_id).order_by(MaxScore.priority.asc()).all()
+    #
+
+    maximum_scores_unsorted = db_session.query(Score.name, func.max(Score.score).label('Maxs')). \
+        filter_by(course_id=course_id). \
+        group_by(Score.name). \
+        subquery()
+
+    maximum_scores_sorted = db_session.query(maximum_scores_unsorted.c.name,
+                                            maximum_scores_unsorted.c.Maxs.label('Maximum')). \
+        filter(maximum_scores_unsorted.c.name == MaxScore.name). \
+        filter(MaxScore.course_id == course_id). \
+        order_by(MaxScore.priority.asc()). \
+        all()
+
+    minimum_scores_unsorted = db_session.query(Score.name, func.min(Score.score).label('Mins')). \
+        filter_by(course_id=course_id). \
+        group_by(Score.name). \
+        subquery()
+
+    minimum_scores_sorted = db_session.query(minimum_scores_unsorted.c.name,
+                                             minimum_scores_unsorted.c.Mins.label('Minimum')). \
+        filter(minimum_scores_unsorted.c.name == MaxScore.name). \
+        filter(MaxScore.course_id == course_id). \
+        order_by(MaxScore.priority.asc()). \
+        all()
+
     max_scores = db_session.query(MaxScore). \
         filter_by(course_id=course_id). \
         order_by(MaxScore.priority.asc()).all()
+
+    mid_term_total = db_session.query(MaxScore.maxscore).filter_by(course_id=course_id,
+                                                                 name='Mid Term Total').one()[0]
 
     student = db_session.query(Student). \
         filter_by(id=student_id).one()
@@ -50,6 +84,42 @@ def process_student_data(db_session, course_id, student_id):
     print average_query_sorted
 
     course_averages = OrderedDict(average_query_sorted)
+
+    course_maximums = OrderedDict(maximum_scores_sorted)
+
+    course_minimums = OrderedDict(minimum_scores_sorted)
+
+    #Course Maximum Preprocessing
+    for key in course_maximums:
+        course_maximums[key] = round(course_maximums[key], 2)
+    try:
+        course_final_maximum = float(course_maximums['Total'])/float(course_total)
+    except KeyError:
+        course_final_maximum = 'Maximum Pending'
+
+    try:
+        course_mid_term_maximum = float(course_maximums['Mid Term Total'])/float(mid_term_total)
+    except KeyError:
+        course_mid_term_maximum = 'Maximum Pending'
+
+    logger(course_mid_term_maximum = course_mid_term_maximum, course_final_maximum = course_final_maximum)
+
+    #print max_scores
+
+    #Course Minimum Preprocessing
+    for key in course_minimums:
+        course_minimums[key] = round(course_minimums[key], 2)
+    try:
+        course_final_minimum = float(course_minimums['Total'])/float(course_total)
+    except KeyError:
+        course_final_minimum = 'Minimum Pending'
+
+    try:
+        course_mid_term_minimum = float(course_minimums['Mid Term Total'])/float(mid_term_total)
+    except KeyError:
+        course_mid_term_minimum = 'Minimum Pending'
+
+    logger(course_mid_term_minimum = course_mid_term_minimum, course_final_minimum = course_final_minimum)
 
     # Course Average Pre processing
     for key in course_averages:
@@ -78,6 +148,57 @@ def process_student_data(db_session, course_id, student_id):
     scores_distribution_percentages = json.dumps([i.maxscore for i in max_scores if 'tal' not in str(i.name).lower()])
     course_averages_for_plot = json.dumps(course_averages)
 
+    #Calculate Grade
+    final_average_percentage = float(course_final_average)/float(course_total)
+    mid_term_average_percentage = float(course_mid_term_average)/float(mid_term_total)
+
+    #Final Grade
+    partition1 = (float(float(course_final_maximum) - final_average_percentage))/4.0
+    partition2 = (float(final_average_percentage - float(course_final_minimum)))/2.0
+    a = course_final_maximum - partition1
+    a_minus = a - partition1
+    b = a_minus - partition1
+    c = final_average_percentage - partition2
+    temp_scores = [round(float(scores[i].score)/ float(max_scores[i].maxscore), 2) for i in range(len(scores))
+         if 'tal' in str(scores[i].name).lower()]
+
+    print a, a_minus, b, course_final_average, c
+
+    if temp_scores[1] >= a:
+        final_grade = 'A'
+    elif temp_scores[1] >= a_minus:
+        final_grade = 'A-'
+    elif temp_scores[1] >= b:
+        final_grade = 'B'
+    elif temp_scores[1] >= final_average_percentage:
+        final_grade = 'B-'
+    elif temp_scores[1] >= c:
+        final_grade = 'C'
+    else:
+        final_grade = 'C-'
+
+    #MidTerm Grade
+
+    partition_mid_1 = (float(float(course_mid_term_maximum) - mid_term_average_percentage)) / 4.0
+    partition_mid_2 = (float(mid_term_average_percentage - float(course_mid_term_minimum))) / 2.0
+    a_mid = course_mid_term_maximum - partition_mid_1
+    a_minus_mid = a_mid - partition_mid_1
+    b_mid = a_minus_mid - partition_mid_1
+    c_mid = mid_term_average_percentage - partition_mid_2
+
+    if temp_scores[0] >= a_mid:
+        mid_term_grade = 'A'
+    elif temp_scores[0] >= a_minus_mid:
+        mid_term_grade = 'A-'
+    elif temp_scores[0] >= b_mid:
+        mid_term_grade = 'B'
+    elif temp_scores[0] >= mid_term_average_percentage:
+        mid_term_grade = 'B-'
+    elif temp_scores[0] >= c_mid:
+        mid_term_grade = 'C'
+    else:
+        mid_term_grade = 'C-'
+
     return scores, \
            course, \
            scores_distribution_percentages, \
@@ -89,7 +210,7 @@ def process_student_data(db_session, course_id, student_id):
            course_averages, \
            course_averages_for_plot, \
            course_mid_term_average, \
-           course_final_average
+           course_final_average, final_grade, mid_term_grade
 
 
 @app.before_request
@@ -360,7 +481,7 @@ def getScoresByStudent(course_id, student_id):
     scores_actual_json, \
     course_averages, \
     course_averages_for_plot, \
-    course_mid_term_average, course_final_average = process_student_data(db_session, course_id, student_id)
+    course_mid_term_average, course_final_average, final_grade, mid_term_grade = process_student_data(db_session, course_id, student_id)
 
     db_session.close()
 
@@ -377,6 +498,8 @@ def getScoresByStudent(course_id, student_id):
                            course_averages_for_plot=course_averages_for_plot,
                            course_mid_term_average=course_mid_term_average,
                            course_final_average=course_final_average,
+                           final_grade = final_grade,
+                           mid_term_grade = mid_term_grade,
                            isAdmin=session_obj['isAdmin'])
 
 
@@ -703,7 +826,7 @@ def editMarks(student_id, course_id, test_name):
     scores_actual_json, \
     course_averages, \
     course_averages_for_plot, \
-    course_mid_term_average, course_final_average = process_student_data(db_session, course_id, student_id)
+    course_mid_term_average, course_final_average, final_grade, mid_term_grade = process_student_data(db_session, course_id, student_id)
 
     db_session.close()
 
@@ -720,4 +843,6 @@ def editMarks(student_id, course_id, test_name):
                            course_averages_for_plot=course_averages_for_plot,
                            course_mid_term_average=course_mid_term_average,
                            course_final_average=course_final_average,
+                           final_grade = final_grade,
+                           mid_term_grade = mid_term_grade,
                            isAdmin=session_obj['isAdmin'])
