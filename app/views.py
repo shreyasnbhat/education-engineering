@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, abort, flash, session, g
+from flask import render_template, request, redirect, url_for, abort, flash, session, g, send_from_directory
 from flask.globals import session as session_obj
 from flask.ext.login import login_user, login_required, logout_user, current_user
 from sqlalchemy.orm import exc
@@ -11,6 +11,7 @@ from string import ascii_uppercase
 from logger import logger
 from db.samplev2 import generate_sample_db
 from werkzeug.utils import secure_filename
+from grader.grader import get_predicted_grade, genGrade
 
 
 # General Function
@@ -46,8 +47,6 @@ def process_student_data(db_session, course_id, student_id):
         filter(MaxScore.course_id == course_id). \
         order_by(MaxScore.priority.asc()). \
         all()
-
-    print average_query_sorted
 
     course_averages = OrderedDict(average_query_sorted)
 
@@ -90,6 +89,103 @@ def process_student_data(db_session, course_id, student_id):
            course_averages_for_plot, \
            course_mid_term_average, \
            course_final_average
+
+
+def get_grading(db_session, course_id):
+    maxscore_by_subject = db_session.query(MaxScore).filter_by(course_id=course_id).all()
+
+    score_names = [i.name for i in maxscore_by_subject]
+    name = score_names[-1]
+
+    maximum_scores_unsorted = db_session.query(Score.name, func.max(Score.score).label('Maxs')). \
+        filter_by(course_id=course_id). \
+        group_by(Score.name). \
+        subquery()
+
+    maximum_scores_sorted = db_session.query(maximum_scores_unsorted.c.name,
+                                             maximum_scores_unsorted.c.Maxs.label('Maximum')). \
+        filter(maximum_scores_unsorted.c.name == MaxScore.name). \
+        filter(MaxScore.course_id == course_id). \
+        order_by(MaxScore.priority.asc()). \
+        all()
+
+    minimum_scores_unsorted = db_session.query(Score.name, func.min(Score.score).label('Mins')). \
+        filter_by(course_id=course_id). \
+        group_by(Score.name). \
+        subquery()
+
+    minimum_scores_sorted = db_session.query(minimum_scores_unsorted.c.name,
+                                             minimum_scores_unsorted.c.Mins.label('Minimum')). \
+        filter(minimum_scores_unsorted.c.name == MaxScore.name). \
+        filter(MaxScore.course_id == course_id). \
+        order_by(MaxScore.priority.asc()). \
+        all()
+
+    course_total = db_session.query(MaxScore.maxscore).filter_by(course_id=course_id,
+                                                                 name=name).one()[0]
+
+    average_query_unsorted = db_session.query(Score.name, func.avg(Score.score).label('Sums')). \
+        filter_by(course_id=course_id). \
+        group_by(Score.name). \
+        subquery()
+
+    average_query_sorted = db_session.query(average_query_unsorted.c.name,
+                                            average_query_unsorted.c.Sums.label('average')). \
+        filter(average_query_unsorted.c.name == MaxScore.name). \
+        filter(MaxScore.course_id == course_id). \
+        order_by(MaxScore.priority.asc()). \
+        all()
+
+    course_averages = OrderedDict(average_query_sorted)
+
+    course_maximums = OrderedDict(maximum_scores_sorted)
+
+    course_minimums = OrderedDict(minimum_scores_sorted)
+
+    # Course Maximum Preprocessing
+    for key in course_maximums:
+        course_maximums[key] = round(course_maximums[key], 2)
+    try:
+        course_final_maximum = float(course_maximums[name])
+    except KeyError:
+        course_final_maximum = 'Maximum Pending'
+
+    # Course Minimum Preprocessing
+    for key in course_minimums:
+        course_minimums[key] = round(course_minimums[key], 2)
+    try:
+        course_final_minimum = float(course_minimums[name])
+    except KeyError:
+        course_final_minimum = 'Minimum Pending'
+
+    # Course Average Pre processing
+    for key in course_averages:
+        course_averages[key] = round(course_averages[key], 2)
+
+    # Get Mid Term Average and Final Average
+    try:
+        course_final_average = course_averages[name]
+    except KeyError:
+        course_final_average = 'Average Pending'
+
+    course_maximum, a, a_minus, b, b_minus, c, c_minus = get_predicted_grade(course_final_average, course_final_minimum,
+                                                                             course_final_maximum)
+    return course_maximum, a, a_minus, b, b_minus, c, c_minus
+
+
+def get_last_column(db_session, course_id):
+    maxscore_by_subject = db_session.query(MaxScore).filter_by(course_id=course_id).all()
+
+    score_names = [i.name for i in maxscore_by_subject]
+    name = score_names[-1]
+    course_total = db_session.query(MaxScore.maxscore).filter_by(course_id=course_id,
+                                                                 name=name).one()[0]
+    return name, course_total
+
+
+"""
+Views Start Here
+"""
 
 
 @app.before_request
@@ -279,6 +375,63 @@ def upload():
             error = "Incorrect file format was chosen!"
             return render_template('upload.html', error=error)
 
+        else:
+            print request.path
+            abort(400)
+
+
+def download(filename):
+    uploads = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    print uploads
+    return send_from_directory(directory=uploads, filename=filename)
+
+
+@app.route('/grade/<string:course_id>', methods=['GET', 'POST'])
+@login_required
+def grade(course_id):
+    if request.method == 'GET':
+        if session_obj['isAdmin']:
+            db_session = DBSession()
+            a_max, a, a_minus, b, b_minus, c, c_minus = get_grading(db_session, course_id=course_id)
+            course_data = db_session.query(Course).filter_by(id=course_id).one()
+            course_name = course_data.name
+            course_name = '.'.join(course_name.split(' '))
+            filename = course_id + '_' + course_name + '_' + course_data.semester + '_' + course_data.year + '.csv'
+            db_session.close()
+            return render_template('grade.html', course_id=course_id, a_max=a_max, a_min=a, a_minus_max=a,
+                                   a_minus_min=a_minus, b_max=a_minus, b_min=b, b_minus_max=b, b_minus_min=b_minus,
+                                   c_max=b_minus, c_min=c, c_minus_max=c, c_minus_min=c_minus, filename=filename)
+        else:
+            return redirect(url_for('getHomePage'))
+    elif request.method == 'POST':
+        print request.form
+        if session_obj['isAdmin']:
+            a_max = float(request.form['A_max'])
+            a_min = float(request.form['A_min'])
+            a_minus_max = float(request.form['A-_max'])
+            a_minus_min = float(request.form['A-_min'])
+            b_max = float(request.form['B_max'])
+            b_min = float(request.form['B_min'])
+            b_minus_max = float(request.form['B-_max'])
+            b_minus_min = float(request.form['B-_min'])
+            c_max = float(request.form['C_max'])
+            c_min = float(request.form['C_min'])
+            c_minus_max = float(request.form['C-_max'])
+            c_minus_min = float(request.form['C-_min'])
+            db_session = DBSession()
+            course_data = db_session.query(Course).filter_by(id=course_id).one()
+            course_name = course_data.name
+            course_name = '.'.join(course_name.split(' '))
+            filename = course_id + '_' + course_name + '_' + course_data.semester + '_' + course_data.year + '.csv'
+            name, total = get_last_column(db_session, course_id)
+            column = name + '-' + str(total)
+            db_session.close()
+            genGrade(filename=filename, column=column, a_min=a_min, a_minus_min=a_minus_min, b_min=b_min,
+                     b_minus_min=b_minus_min, c_min=c_min)
+            print 'hi'
+            uploads = os.path.join(app.config['UPLOAD_FOLDER'])
+            print uploads
+            return send_from_directory(directory=uploads, filename=filename, as_attachment=True)
         else:
             print request.path
             abort(400)

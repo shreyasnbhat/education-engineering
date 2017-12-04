@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Subjects</title>
+
+    <link href="{{ url_for('static', filename='css/materialize.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/home_styles.css') }}" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+<nav>
+    <div class="nav-wrapper orange darken-3">
+        <a href="{{ url_for('getCourses') }}" class="brand-logo title-style">Grade Predictor and Analyzer</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li class="large-font"><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </div>
+</nav>
+{% if error %}
+    <div class="block-style">
+        <p class="error">{{ error }}</p>
+    </div>
+{% endif %}
+<div class="row block-style">
+    <div class="col s4 offset-s4 card-panel white hoverable blue-grey darken-3 white-text">
+        <form class="col s12 block-style" action="{{ url_for('grade', course_id = course_id) }}" class="col s5"
+              method="POST" enctype="multipart/form-data">
+            <div class="row">
+                <h4 class="col s2 offset-s1">A</h4>
+                <div class="input-field col s4">
+                    <input value={{ a_max }} placeholder="A_max" name="A_max" , type="number" class="validate">
+                </div>
+                <div class="input-field col s4">
+                    <input value={{ a_min }} placeholder="A_min" name="A_min" , type="number" class="validate">
+                </div>
+            </div>
+            <div class="row">
+                <h4 class="col s2 offset-s1">A-</h4>
+
+                <div class="input-field col s4">
+                    <input value={{ a_minus_max }} placeholder="A-_max" name="A-_max" , type="number" class="validate">
+                </div>
+                <div class="input-field col s4">
+                    <input value={{ a_minus_min }} placeholder="A-_min" name="A-_min" , type="number" class="validate">
+                </div>
+            </div>
+            <div class="row">
+                <h4 class="col s2 offset-s1">B</h4>
+
+                <div class="input-field col s4">
+                    <input value={{ b_max }} placeholder="B_max" name="B_max" , type="number" class="validate">
+                </div>
+                <div class="input-field col s4">
+                    <input value={{ b_min }} placeholder="B_min" name="B_min" , type="number" class="validate">
+                </div>
+            </div>
+            <div class="row">
+                <h4 class="col s2 offset-s1">B-</h4>
+
+                <div class="input-field col s4">
+                    <input value={{ b_minus_max }} placeholder="B-_max" name="B-_max" , type="number" class="validate">
+                </div>
+                <div class="input-field col s4">
+                    <input value={{ b_minus_min }} placeholder="B-_min" name="B-_min" , type="number" class="validate">
+                </div>
+            </div>
+            <div class="row">
+                <h4 class="col s2 offset-s1">C</h4>
+
+                <div class="input-field col s4">
+                    <input value={{ c_max }} placeholder="C_max" name="C_max" , type="number" class="validate">
+                </div>
+                <div class="input-field col s4">
+                    <input value={{ c_min }} placeholder="C_min" name="C_min" , type="number" class="validate">
+                </div>
+            </div>
+            <div class="row">
+                <h4 class="col s2 offset-s1">C-</h4>
+
+                <div class="input-field col s4">
+                    <input value={{ c_minus_max }} placeholder="C-_max" name="C-_max" , type="number" class="validate">
+                </div>
+                <div class="input-field col s4">
+                    <input value={{ c_minus_min }} placeholder="C-_min" name="C-_min" , type="number" class="validate">
+                </div>
+            </div>
+            <div class="row center">
+                <input type="submit" class="btn">
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
