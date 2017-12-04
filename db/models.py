@@ -39,6 +39,8 @@ class Course(Base):
     __tablename__ = 'courses'
 
     id = Column(String(10), ForeignKey('scores.course_id'), primary_key=True)
+    year = Column(String(4), primary_key=True)
+    semester = Column(String(1), primary_key=True)
     name = Column(String(30), nullable=False)
     score = relationship('Score')
 
@@ -65,6 +67,13 @@ class AuthStore(Base):
 
     def get_id(self):
         return self.id.encode('utf-8')
+
+
+class Grade(Base):
+    __tablename__ = 'grades'
+    student_id = Column(String(20), primary_key=True)
+    course_id = Column(String(10), primary_key=True)
+    grade = Column(String(2))
 
 
 class Admin(Base):

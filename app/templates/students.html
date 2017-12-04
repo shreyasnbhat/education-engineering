@@ -20,6 +20,11 @@
         </ul>
     </div>
 </nav>
+ <div class="block-style">
+    <form action="{{ url_for('grade',course_id=course_id)}}">
+        <input type="submit" value="Grade" class="btn waves-effect waves-light"/>
+    </form>
+ </div>
 <div class="block-style">
     {% if students %}
     <ul class="collection">

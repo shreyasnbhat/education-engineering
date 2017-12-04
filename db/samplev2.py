@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, func
 from sqlalchemy.exc import IntegrityError
 
 
-def generate_sample_db(path, course_id, course_name, db_session):
+def generate_sample_db(path, course_id, course_name, semester, year, db_session):
     """
     This function is used to populate the database with a csv file
     :param path: This consists the path of the .csv file to add to the db
@@ -158,7 +158,7 @@ def generate_sample_db(path, course_id, course_name, db_session):
 
     # Add course data
     try:
-        db_session.add(Course(id=course_id, name=course_name))
+        db_session.add(Course(id=course_id, name=course_name, year=year, semester=semester))
         db_session.commit()
     except IntegrityError:
         db_session.rollback()
@@ -201,11 +201,13 @@ if __name__ == '__main__':
     """
     course_id, course_name_unformatted, semester, year = list_of_files[chosen_file_id].split('_')
     course_name = " ".join(course_name_unformatted.split('.'))
-
+    year, _ = year.split('.')
     # Generate the sample here
     generate_sample_db(path,
                        course_id,
                        course_name,
+                       semester,
+                       year,
                        db_session)
 
     db_session.close()
