@@ -1,0 +1,6 @@
+bcrypt
+celery
+flask
+flask-login
+sqlalchemy
+
