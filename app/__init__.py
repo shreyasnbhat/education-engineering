@@ -1,5 +1,5 @@
 from flask import Flask
-from flask.ext.login import LoginManager
+from flask_login import LoginManager
 from db.models import *
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
