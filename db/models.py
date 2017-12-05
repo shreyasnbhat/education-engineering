@@ -42,6 +42,7 @@ class Course(Base):
     year = Column(String(4), primary_key=True)
     semester = Column(String(1), primary_key=True)
     name = Column(String(30), nullable=False)
+    mgpa = Column(String(30))
     score = relationship('Score')
 
 

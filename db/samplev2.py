@@ -30,11 +30,12 @@ def generate_sample_db(path, course_id, course_name, semester, year, db_session)
 
     # Set priority for scores for ordering in graphs here
     try:
-        priority = db_session.query(func.max(MaxScore.priority).label("max_priority")).filter_by(course_id=course_id).scalar() + 1
+        priority = db_session.query(func.max(MaxScore.priority).label("max_priority")).filter_by(
+            course_id=course_id).scalar() + 1
     except:
         priority = 0
 
-    print "priority =",  priority
+    print "priority =", priority
 
     for i in sample_mark_columns:
         score_name, score_max = i.strip().split('-')
@@ -110,6 +111,21 @@ def generate_sample_db(path, course_id, course_name, semester, year, db_session)
         except IntegrityError:
             db_session.rollback()
 
+    add_admins(db_session)
+
+    print "Added Authentication credentials"
+
+    # Add course data
+    try:
+        db_session.add(Course(id=course_id, name=course_name, year=year, semester=semester, mgpa="Not yet Graded!"))
+        db_session.commit()
+    except IntegrityError:
+        db_session.rollback()
+
+    print "Added Course Data!"
+
+
+def add_admins(db_session):
     # Add admin login credentials
     admin_ids = ['admin', 'pkd', 'abaskar', 'bmd']
     admin_names = ['Shreyas', 'Dr Prasant Kumar Das', 'A Baskar', 'Bharat Deshpande']
@@ -154,19 +170,13 @@ def generate_sample_db(path, course_id, course_name, semester, year, db_session)
         except IntegrityError:
             db_session.rollback()
 
-    print "Added Authentication credentials"
-
-    # Add course data
-    try:
-        db_session.add(Course(id=course_id, name=course_name, year=year, semester=semester))
-        db_session.commit()
-    except IntegrityError:
-        db_session.rollback()
-
-    print "Added Course Data!"
+    print "Finish"
 
 
 if __name__ == '__main__':
+
+    print "Initialize DB with any csv? (Yes/No)"
+    check = str(raw_input().strip())
 
     print "Choose database name"
     print "--------------------"
@@ -178,36 +188,41 @@ if __name__ == '__main__':
     DBSession = sessionmaker(bind=engine)
     db_session = DBSession()
 
-    print "Choose which file to populate"
-    print "-----------------------------"
-    list_of_files = os.listdir('../data')
+    if check == "Yes":
 
-    file_id = 0
+        print "Choose which file to populate"
+        print "-----------------------------"
+        list_of_files = os.listdir('../data')
 
-    for file in list_of_files:
-        print str(file_id) + str('.'), file
-        file_id += 1
+        file_id = 0
 
-    chosen_file_id = int(raw_input().strip())
+        for file in list_of_files:
+            print str(file_id) + str('.'), file
+            file_id += 1
 
-    path = str('../data/') + list_of_files[chosen_file_id]
+        chosen_file_id = int(raw_input().strip())
 
-    """
-    The file name for the .csv file is defined in FILEFORMAT.md
-    :param course_id: Course ID for the course
-    :param course_name: Course name for the course
-    :param semester: Semester for the course. Can be either 1 or 2
-    :param year: Year of conduction of the course
-    """
-    course_id, course_name_unformatted, semester, year = list_of_files[chosen_file_id].split('_')
-    course_name = " ".join(course_name_unformatted.split('.'))
-    year, _ = year.split('.')
-    # Generate the sample here
-    generate_sample_db(path,
-                       course_id,
-                       course_name,
-                       semester,
-                       year,
-                       db_session)
+        path = str('../data/') + list_of_files[chosen_file_id]
+
+        """
+        The file name for the .csv file is defined in FILEFORMAT.md
+        :param course_id: Course ID for the course
+        :param course_name: Course name for the course
+        :param semester: Semester for the course. Can be either 1 or 2
+        :param year: Year of conduction of the course
+        """
+        course_id, course_name_unformatted, semester, year = list_of_files[chosen_file_id].split('_')
+        course_name = " ".join(course_name_unformatted.split('.'))
+        year, _ = year.split('.')
+        # Generate the sample here
+        generate_sample_db(path,
+                           course_id,
+                           course_name,
+                           semester,
+                           year,
+                           db_session)
+
+    else:
+        add_admins(db_session)
 
     db_session.close()

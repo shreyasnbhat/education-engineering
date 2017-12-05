@@ -425,10 +425,9 @@ def grade(course_id):
             filename = course_id + '_' + course_name + '_' + course_data.semester + '_' + course_data.year + '.csv'
             name, total = get_last_column(db_session, course_id)
             column = name + '-' + str(total)
-            db_session.close()
             genGrade(filename=filename, column=column, a_min=a_min, a_minus_min=a_minus_min, b_min=b_min,
-                     b_minus_min=b_minus_min, c_min=c_min)
-            print 'hi'
+                     b_minus_min=b_minus_min, c_min=c_min, db_session=db_session)
+            db_session.close()
             uploads = os.path.join(app.config['UPLOAD_FOLDER'])
             print uploads
             return send_from_directory(directory=uploads, filename=filename, as_attachment=True)
