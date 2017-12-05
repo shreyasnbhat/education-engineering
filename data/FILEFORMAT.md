@@ -9,7 +9,9 @@ ID Number|ID Number
 Name|Name
 Test name|Test name-MaxScore
 
-####Example .csv file
+> Note: All the column must exist in the csv file even if the marks have'nt been updated yet.
+
+#### Example .csv file
 
 |ID Number | Name | Test1-30 | Test2-30 | Comprehensive-40 | Total-100
 |------------|:---------------:|:------:|:-----:|:---------:|:----------:|
