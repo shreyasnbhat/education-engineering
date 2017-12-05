@@ -321,6 +321,9 @@ def upload_async(upload_file_filename_secure):
         path = os.path.join(app.config['UPLOAD_FOLDER'], upload_file_filename_secure)
         course_id, course_name_unformatted, semester, year = upload_file_filename_secure.split('_')
         course_name = " ".join(course_name_unformatted.split('.'))
+        logger(year=year)
+        year, _ = year.split('.')
+        logger(year=year)
         print "The path is: " + path
 
         while not os.path.exists(path):
@@ -332,6 +335,8 @@ def upload_async(upload_file_filename_secure):
             generate_sample_db(path,
                                course_id,
                                course_name,
+                               semester,
+                               year,
                                db_session)
         else:
             raise ValueError("%s isn't a file!" % path)
@@ -397,6 +402,7 @@ def grade(course_id):
             course_name = course_data.name
             course_name = '.'.join(course_name.split(' '))
             filename = course_id + '_' + course_name + '_' + course_data.semester + '_' + course_data.year + '.csv'
+            logger(filename=filename)
             db_session.close()
             return render_template('grade.html', course_id=course_id, a_max=a_max, a_min=a, a_minus_max=a,
                                    a_minus_min=a_minus, b_max=a_minus, b_min=b, b_minus_max=b, b_minus_min=b_minus,
@@ -423,6 +429,7 @@ def grade(course_id):
             course_name = course_data.name
             course_name = '.'.join(course_name.split(' '))
             filename = course_id + '_' + course_name + '_' + course_data.semester + '_' + course_data.year + '.csv'
+            logger(filename=filename)
             name, total = get_last_column(db_session, course_id)
             column = name + '-' + str(total)
             genGrade(filename=filename, column=column, a_min=a_min, a_minus_min=a_minus_min, b_min=b_min,
