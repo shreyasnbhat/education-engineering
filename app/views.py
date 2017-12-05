@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, abort, flash, session, g, send_from_directory
 from flask.globals import session as session_obj
-from flask.ext.login import login_user, login_required, logout_user, current_user
+from flask_login import login_user, login_required, logout_user, current_user
 from sqlalchemy.orm import exc
 from sqlalchemy import and_
 import json, os, time, smtplib, bcrypt, hashlib
